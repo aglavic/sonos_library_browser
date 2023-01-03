@@ -135,6 +135,7 @@ class GUIWindow(QtWidgets.QMainWindow):
     system: SonosSystem
     ITEMS_PER_ROW = 10
     ITEM_SCALE = 200
+    MARGIN = 10
 
     def __init__(self):
         super().__init__()
@@ -186,11 +187,13 @@ class GUIWindow(QtWidgets.QMainWindow):
         labels = {}
         # text labels
         for i, artist in enumerate(artists):
-            label=QtWidgets.QGraphicsTextItem(artist.title)
+            label=QtWidgets.QGraphicsTextItem()
+            label.setHtml(f'<div style="background: rgba(255, 255, 255, 200);"><center>{artist.title}</center></div>')
             label.setPos(self.ITEM_SCALE*(i%self.ITEMS_PER_ROW),
-                         self.ITEM_SCALE*(i//self.ITEMS_PER_ROW)+self.ITEM_SCALE*2/3)
-            label.setTextWidth(self.ITEM_SCALE*3/5)
+                         self.ITEM_SCALE*(i//self.ITEMS_PER_ROW))
+            label.setTextWidth(self.ITEM_SCALE-self.MARGIN)
             label.setData(0, artist.title)
+            label.setZValue(5.0)
             scene.addItem(label)
 
         self.ui.libraryView.setScene(scene)
@@ -213,7 +216,7 @@ class GUIWindow(QtWidgets.QMainWindow):
                 pass
 
             scene:QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
-            img_scale = int(self.ITEM_SCALE * 3 / 5)
+            img_scale = int(self.ITEM_SCALE - 2*self.MARGIN)
             std_icon = self.style().standardIcon(QtWidgets.QStyle.SP_FileIcon)
             std_pixmap = std_icon.pixmap(img_scale, img_scale)
             # build images
@@ -229,7 +232,7 @@ class GUIWindow(QtWidgets.QMainWindow):
                 item = QtWidgets.QGraphicsPixmapItem()
                 item.setPixmap(pixmap)
                 item.setPos(self.ITEM_SCALE * (i % self.ITEMS_PER_ROW),
-                            self.ITEM_SCALE * (i // self.ITEMS_PER_ROW)+5)
+                            self.ITEM_SCALE * (i // self.ITEMS_PER_ROW)+self.MARGIN)
                 item.setData(0, artist.title)
 
                 scene.addItem(item)
