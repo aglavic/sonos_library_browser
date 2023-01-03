@@ -91,36 +91,40 @@ class LibraryImageBuilder(QtCore.QObject):
         # collect icons
         self.icon_data={}
         for i, artist in enumerate(artists):
-            last_date = -1
-            albums = music_library.get_albums_for_artist(artist.title)
-            for album in albums:
-                try:
-                    img_data, date = mdb.get_image(artist.title, album.title)
-                    if not img_data:
-                        rtrack = music_library.get_tracks_for_album(artist.title, album.title, full_album_art_uri=True).pop()
-                        uri = music_library.build_album_art_full_uri(rtrack.album_art_uri)
-                        rtfile = rtrack.get_uri()
-                        if rtfile.startswith('x-file-cifs:'):
-                            rtpath = urllib.request.unquote(rtfile.split(':',1)[1])
-                            rmp3 = eyed3.load(rtpath)
+            img_data, date = mdb.get_last_image(artist.title)
+            if img_data is not None:
+                self.icon_data[artist.title] = img_data
+            else:
+                last_date = -1
+                albums = music_library.get_albums_for_artist(artist.title)
+                for album in albums:
+                    try:
+                        img_data, date = mdb.get_image(artist.title, album.title)
+                        if not img_data:
+                            rtrack = music_library.get_tracks_for_album(artist.title, album.title, full_album_art_uri=True).pop()
+                            uri = music_library.build_album_art_full_uri(rtrack.album_art_uri)
+                            rtfile = rtrack.get_uri()
+                            if rtfile.startswith('x-file-cifs:'):
+                                rtpath = urllib.request.unquote(rtfile.split(':',1)[1])
+                                rmp3 = eyed3.load(rtpath)
 
-                except Exception as e:
-                    print(e)
-                else:
-                    if not img_data:
-                        try:
-                            img_data = urllib.request.urlopen(uri).read()
-                        except Exception as e:
-                            print(e)
-                        else:
+                    except Exception as e:
+                        print(e)
+                    else:
+                        if not img_data:
                             try:
-                                date = int(str(rmp3.tag.recording_date))
-                            except ValueError:
-                                date = 0
-                            mdb.insert_image(artist.title, album.title, img_data, date)
-                    if date>last_date:
-                        self.icon_data[artist.title] = img_data
-                        last_date = date
+                                img_data = urllib.request.urlopen(uri).read()
+                            except Exception as e:
+                                print(e)
+                            else:
+                                try:
+                                    date = int(str(rmp3.tag.recording_date))
+                                except ValueError:
+                                    date = 0
+                                mdb.insert_image(artist.title, album.title, img_data, date)
+                        if date>last_date:
+                            self.icon_data[artist.title] = img_data
+                            last_date = date
             self.download_progress.emit((i+1)/len(artists))
         print('Thread finished')
 
@@ -231,6 +235,7 @@ class GUIWindow(QtWidgets.QMainWindow):
                 scene.addItem(item)
 
             scene.mouseReleaseEvent = self.selection_changed
+            self.album_scene = scene
             del(self._image_builder)
             self._thread.quit()
             self._thread.wait()
@@ -243,20 +248,23 @@ class GUIWindow(QtWidgets.QMainWindow):
         item = scene.itemAt(event.scenePos(), trans)
         if item is None:
             return
+        self._last_album_scoll = self.ui.libraryView.verticalScrollBar().value()
         self.show_album(item.data(0))
 
     def show_album(self, artist):
         albums = list(self.system.speakers[0].reference.music_library.get_albums_for_artist(artist))
 
-        width = min(self.ITEM_SCALE * self.ITEMS_PER_ROW, self.ITEM_SCALE*len(albums))
+        ipr = self.ITEMS_PER_ROW // 2
+
+        width = min(self.ITEM_SCALE * self.ITEMS_PER_ROW, 2*self.ITEM_SCALE*len(albums))
         scene = QtWidgets.QGraphicsScene(0, 0, width,
-                            self.ITEM_SCALE * (len(albums) // self.ITEMS_PER_ROW + 1)+self.ITEM_SCALE*0.5)
+                            2*self.ITEM_SCALE * (len(albums) // ipr + 1)+self.ITEM_SCALE*0.5)
 
         title = QtWidgets.QGraphicsTextItem(f'Albums by {artist}:')
         title.setPos(10, 5)
         scene.addItem(title)
 
-        img_scale = int(self.ITEM_SCALE * 3 / 5)
+        img_scale = int(self.ITEM_SCALE * 6 / 5)
         album_data = []
         for album in albums:
             img_data, date = mdb.get_image(artist, album.title)
@@ -265,9 +273,9 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         for i, (date, album, img_data, uri) in enumerate(album_data):
             label = QtWidgets.QGraphicsTextItem(f'{album} ({date})')
-            label.setPos(self.ITEM_SCALE*(i%self.ITEMS_PER_ROW),
-                         self.ITEM_SCALE*(i//self.ITEMS_PER_ROW)+self.ITEM_SCALE*2/3+self.ITEM_SCALE*0.5)
-            label.setTextWidth(self.ITEM_SCALE*3/5)
+            label.setPos(2*self.ITEM_SCALE*(i%ipr),
+                         2*self.ITEM_SCALE*(i//ipr)+self.ITEM_SCALE*4/3+self.ITEM_SCALE*0.5)
+            label.setTextWidth(2*self.ITEM_SCALE*4/5)
             label.setData(0, (artist, album, uri))
             scene.addItem(label)
 
@@ -281,8 +289,8 @@ class GUIWindow(QtWidgets.QMainWindow):
 
             item = QtWidgets.QGraphicsPixmapItem()
             item.setPixmap(pixmap)
-            item.setPos(self.ITEM_SCALE * (i % self.ITEMS_PER_ROW),
-                        self.ITEM_SCALE * (i // self.ITEMS_PER_ROW) + 5+self.ITEM_SCALE*0.5)
+            item.setPos(2*self.ITEM_SCALE * (i % ipr),
+                        2*self.ITEM_SCALE * (i // ipr) + 5+self.ITEM_SCALE*0.5)
             item.setData(0, (artist, album, uri))
 
             scene.addItem(item)
@@ -297,7 +305,9 @@ class GUIWindow(QtWidgets.QMainWindow):
         trans = self.ui.libraryView.transform()
         item = scene.itemAt(event.scenePos(), trans)
         if item is None:
-            self.build_library()
+            self.ui.libraryView.setScene(self.album_scene)
+            self.ui.libraryView.verticalScrollBar().setValue(self._last_album_scoll)
+            return
         else:
             artist, album, uri = item.data(0)
             glabel = self.ui.groupList.currentItem().text()
@@ -389,6 +399,18 @@ class GUIWindow(QtWidgets.QMainWindow):
         pixmap = QtGui.QPixmap()
         pixmap.loadFromData(img_data)
         self.ui.NowPlayingArt.setPixmap(pixmap)
+
+    def change_icon_size(self, index):
+        if index==0:
+            self.ITEM_SCALE=200
+            self.ITEMS_PER_ROW=10
+        elif index==1:
+            self.ITEM_SCALE=400
+            self.ITEMS_PER_ROW=5
+        elif index==2:
+            self.ITEM_SCALE=700
+            self.ITEMS_PER_ROW=3
+        self.build_library()
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

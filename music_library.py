@@ -13,6 +13,9 @@ INSERT_QUERY = """INSERT INTO album_art
 SEARCH_QUERY = """SELECT album_art,date FROM album_art
 WHERE artist = ? AND album = ?;"""
 
+SEARCH_QUERY_2 = """SELECT album_art,date FROM album_art
+WHERE artist = ? ORDER BY date DESC;"""
+
 def connect_db():
     global db
     db = sqlite3.connect('music_library.db')
@@ -38,3 +41,13 @@ def get_image(artist, album):
     else:
         return None, 0
 
+def get_last_image(artist):
+    cursor = db.cursor()
+    cursor.execute(SEARCH_QUERY_2, (artist, ))
+    rows = cursor.fetchall()
+    cursor.close()
+
+    if len(rows)>0:
+        return tuple(rows[0])
+    else:
+        return None, 0
