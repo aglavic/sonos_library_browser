@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\main_interface.ui'
+# Form implementation generated from reading ui file 'main_interface.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.7
 #
@@ -175,6 +175,12 @@ class Ui_MainWindow(object):
         self.groupList.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
         self.groupList.setObjectName("groupList")
         self.verticalLayout_6.addWidget(self.groupList)
+        self.label_7 = QtWidgets.QLabel(self.dockWidgetContents)
+        self.label_7.setObjectName("label_7")
+        self.verticalLayout_6.addWidget(self.label_7)
+        self.speakerList = QtWidgets.QListWidget(self.dockWidgetContents)
+        self.speakerList.setObjectName("speakerList")
+        self.verticalLayout_6.addWidget(self.speakerList)
         self.groupsDock.setWidget(self.dockWidgetContents)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.groupsDock)
         self.queueDock = QtWidgets.QDockWidget(MainWindow)
@@ -253,6 +259,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Library"))
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar"))
         self.groupsDock.setWindowTitle(_translate("MainWindow", "Groups"))
+        self.label_7.setText(_translate("MainWindow", "Speakers"))
         self.queueDock.setWindowTitle(_translate("MainWindow", "Group Queue"))
         self.settingsDock.setWindowTitle(_translate("MainWindow", "Settings"))
         self.iconSizeBox.setItemText(0, _translate("MainWindow", "small"))

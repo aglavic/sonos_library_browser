@@ -1,4 +1,5 @@
 import sys
+import os
 import urllib.request
 from dataclasses import dataclass, fields
 
@@ -12,6 +13,13 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import main_interface
 import music_library as mdb
 
+BASE_PATH = os.path.abspath(os.path.dirname(__file__))
+SPEAKER_ICONS = {
+    #'Sonos Ray': os.path.join(BASE_PATH, 'icons', 'move.png'),
+    #'Sonos Beam': os.path.join(BASE_PATH, 'icons', 'move.png'),
+    'Sonos Move': os.path.join(BASE_PATH, 'icons', 'move.png'),
+    #'Sonos Port': os.path.join(BASE_PATH, 'icons', 'move.png'),
+    }
 
 
 @dataclass
@@ -153,6 +161,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.progress_bar = QtWidgets.QProgressBar()
         self.ui.toolBar.addWidget(self.progress_bar)
 
+        self.build_speaker_list()
         self.build_group_list()
         self._library_artwork = None
         # calculate item scale and build library
@@ -178,6 +187,13 @@ class GUIWindow(QtWidgets.QMainWindow):
         system = SonosSystem(speakers)
         system.now_playing()
         self.system = system
+
+    def build_speaker_list(self):
+        self.ui.speakerList.clear()
+        for i, item in enumerate(self.system.speakers):
+            self.ui.speakerList.addItem(f'{item.name} ({item.ip_address})\n\t{item.room}')
+            speaker_type = item.reference.speaker_info.get('model_name', None)
+
 
     def build_group_list(self):
         self.ui.groupList.clear()
