@@ -135,6 +135,7 @@ class LibraryImageBuilder(QtCore.QObject):
 class GUIWindow(QtWidgets.QMainWindow):
     system: SonosSystem
     ITEMS_PER_ROW = 10
+    ALBUMS_PER_ROW = 6
     ITEM_SCALE = 10
     MARGIN = 5
 
@@ -272,7 +273,8 @@ class GUIWindow(QtWidgets.QMainWindow):
     def show_album(self, artist):
         albums = list(self.system.speakers[0].reference.music_library.get_albums_for_artist(artist))
 
-        ipr = self.ITEMS_PER_ROW // 2
+        ipr = self.ALBUMS_PER_ROW
+        block_width = self.ui.libraryView.FULL_LIBRARY_WIDTH//ipr
 
         scene = QtWidgets.QGraphicsScene(0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH,
                             2*self.ITEM_SCALE * (len(albums) // ipr + 1)+self.ITEM_SCALE*0.5)
@@ -281,7 +283,8 @@ class GUIWindow(QtWidgets.QMainWindow):
         title.setPos(10, 5)
         scene.addItem(title)
 
-        img_scale = int(self.ITEM_SCALE * 6 / 5)
+        img_scale = int(block_width * 3 / 5)
+        img_offset = int(block_width * 1 / 10)
         album_data = []
         for album in albums:
             img_data, date = mdb.get_image(artist, album.title)
@@ -289,10 +292,11 @@ class GUIWindow(QtWidgets.QMainWindow):
         album_data.sort()
 
         for i, (date, album, img_data, uri) in enumerate(album_data):
-            label = QtWidgets.QGraphicsTextItem(f'{album} ({date})')
-            label.setPos(2*self.ITEM_SCALE*(i%ipr),
-                         2*self.ITEM_SCALE*(i//ipr)+self.ITEM_SCALE*4/3+self.ITEM_SCALE*0.5)
-            label.setTextWidth(2*self.ITEM_SCALE*4/5)
+            label = QtWidgets.QGraphicsTextItem()
+            label.setHtml(f'<center>{album}<br />({date})</center>')
+            label.setPos(block_width*(i%ipr),
+                         block_width*(i//ipr)+img_scale+2*self.MARGIN+block_width*0.25)
+            label.setTextWidth(block_width*4/5)
             label.setData(0, (artist, album, uri))
             scene.addItem(label)
 
@@ -306,8 +310,8 @@ class GUIWindow(QtWidgets.QMainWindow):
 
             item = QtWidgets.QGraphicsPixmapItem()
             item.setPixmap(pixmap)
-            item.setPos(2*self.ITEM_SCALE * (i % ipr),
-                        2*self.ITEM_SCALE * (i // ipr) + 5+self.ITEM_SCALE*0.5)
+            item.setPos(block_width * (i % ipr) + img_offset,
+                        block_width * (i // ipr) + self.MARGIN+block_width*0.25)
             item.setData(0, (artist, album, uri))
 
             scene.addItem(item)
@@ -425,10 +429,13 @@ class GUIWindow(QtWidgets.QMainWindow):
     def change_icon_size(self, index):
         if index==0:
             self.ITEMS_PER_ROW=10
+            self.ALBUMS_PER_ROW=6
         elif index==1:
             self.ITEMS_PER_ROW=5
+            self.ALBUMS_PER_ROW=3
         elif index==2:
             self.ITEMS_PER_ROW=3
+            self.ALBUMS_PER_ROW=2
         total_margins = (self.ITEMS_PER_ROW-1)*self.MARGIN
         self.ITEM_SCALE = (self.ui.libraryView.FULL_LIBRARY_WIDTH-total_margins)//self.ITEMS_PER_ROW
         self.build_library()
