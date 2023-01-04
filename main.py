@@ -1,18 +1,18 @@
 import sys
 import urllib.request
 from dataclasses import dataclass, fields
-from time import sleep
 
 import soco
 import soco.groups
 import soco.data_structures
 import eyed3
 
-from OpenGL import GL
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import main_interface
 import music_library as mdb
+
+
 
 @dataclass
 class Track:
@@ -101,8 +101,9 @@ class LibraryImageBuilder(QtCore.QObject):
                     try:
                         img_data, date = mdb.get_image(artist.title, album.title)
                         if not img_data:
-                            rtrack = music_library.get_tracks_for_album(artist.title, album.title, full_album_art_uri=True).pop()
-                            uri = music_library.build_album_art_full_uri(rtrack.album_art_uri)
+                            rtrack = music_library.get_tracks_for_album(artist.title, album.title,
+                                                                        full_album_art_uri=True).pop()
+                            uri = rtrack.album_art_uri
                             rtfile = rtrack.get_uri()
                             if rtfile.startswith('x-file-cifs:'):
                                 rtpath = urllib.request.unquote(rtfile.split(':',1)[1])
@@ -134,20 +135,27 @@ class LibraryImageBuilder(QtCore.QObject):
 class GUIWindow(QtWidgets.QMainWindow):
     system: SonosSystem
     ITEMS_PER_ROW = 10
-    ITEM_SCALE = 200
-    MARGIN = 10
+    ITEM_SCALE = 10
+    MARGIN = 5
 
     def __init__(self):
         super().__init__()
         self.image_cache = {}
         self.ui = main_interface.Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.actionBack.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaSkipBackward))
+        self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
+        self.ui.actionStop.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaStop))
+        self.ui.actionForward.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaSkipForward))
+
         self.setup_sonos()
         self.progress_bar = QtWidgets.QProgressBar()
         self.ui.toolBar.addWidget(self.progress_bar)
 
         self.build_group_list()
-        self.build_library()
+        self._library_artwork = None
+        # calculate item scale and build library
+        self.change_icon_size(self.ui.iconSizeBox.currentIndex())
 
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.on_timer)
@@ -181,7 +189,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         artists = list(music_library.get_album_artists(max_items=1000))
         artists.sort(key=lambda a: a.title)
 
-        scene = QtWidgets.QGraphicsScene(0, 0, self.ITEM_SCALE*self.ITEMS_PER_ROW,
+        scene = QtWidgets.QGraphicsScene(0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH,
                                          self.ITEM_SCALE*(len(artists)//self.ITEMS_PER_ROW+1))
 
         labels = {}
@@ -191,59 +199,66 @@ class GUIWindow(QtWidgets.QMainWindow):
             label.setHtml(f'<div style="background: rgba(255, 255, 255, 200);"><center>{artist.title}</center></div>')
             label.setPos(self.ITEM_SCALE*(i%self.ITEMS_PER_ROW),
                          self.ITEM_SCALE*(i//self.ITEMS_PER_ROW))
-            label.setTextWidth(self.ITEM_SCALE-self.MARGIN)
+            label.setTextWidth(self.ITEM_SCALE-2*self.MARGIN)
             label.setData(0, artist.title)
             label.setZValue(5.0)
             scene.addItem(label)
 
         self.ui.libraryView.setScene(scene)
 
-        self._image_builder = LibraryImageBuilder(music_library, artists)
-        self._image_builder.download_progress.connect(self.update_download)
+        if self._library_artwork is None:
+            self._image_builder = LibraryImageBuilder(music_library, artists)
+            self._image_builder.download_progress.connect(self.update_download)
 
-        self._thread = QtCore.QThread()
-        self._image_builder.moveToThread(self._thread)
-        self.progress_bar.setStatusTip('Loading Albums')
-        self._thread.started.connect(self._image_builder.build_library_images)
-        self._thread.start()
+            self._thread = QtCore.QThread()
+            self._image_builder.moveToThread(self._thread)
+            self.progress_bar.setStatusTip('Loading Albums')
+            self._thread.started.connect(self._image_builder.build_library_images)
+            self._thread.start()
+        else:
+            self.build_artist_icons()
 
     def update_download(self, progress):
         self.progress_bar.setValue(int(progress*100))
 
         if progress == 1.0:
-            icon_data = self._image_builder.icon_data
-            for i, artist in enumerate(self._image_builder.artists):
-                pass
-
-            scene:QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
-            img_scale = int(self.ITEM_SCALE - 2*self.MARGIN)
-            std_icon = self.style().standardIcon(QtWidgets.QStyle.SP_FileIcon)
-            std_pixmap = std_icon.pixmap(img_scale, img_scale)
-            # build images
-            for i, artist in enumerate(self._image_builder.artists):
-                if artist.title in icon_data:
-                    pixmap = QtGui.QPixmap()
-                    pixmap.loadFromData(icon_data[artist.title])
-                    pixmap = pixmap.scaled(img_scale, img_scale,
-                                           aspectRatioMode=QtCore.Qt.KeepAspectRatio)
-                else:
-                    pixmap = std_pixmap
-
-                item = QtWidgets.QGraphicsPixmapItem()
-                item.setPixmap(pixmap)
-                item.setPos(self.ITEM_SCALE * (i % self.ITEMS_PER_ROW),
-                            self.ITEM_SCALE * (i // self.ITEMS_PER_ROW)+self.MARGIN)
-                item.setData(0, artist.title)
-
-                scene.addItem(item)
-
-            scene.mouseReleaseEvent = self.selection_changed
-            self.album_scene = scene
+            self._library_artwork = self._image_builder.icon_data
+            self.build_artist_icons()
             del(self._image_builder)
             self._thread.quit()
             self._thread.wait()
             del(self._thread)
             mdb.connect_db()
+
+    def build_artist_icons(self):
+        scene: QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
+        img_scale = int(self.ITEM_SCALE - 2 * self.MARGIN)
+        std_icon = self.style().standardIcon(QtWidgets.QStyle.SP_FileIcon)
+        std_pixmap = std_icon.pixmap(img_scale, img_scale)
+
+        music_library=self.system.speakers[0].reference.music_library
+        artists = list(music_library.get_album_artists(max_items=1000))
+        artists.sort(key=lambda a: a.title)
+
+        # build images
+        for i, artist in enumerate(artists):
+            if artist.title in self._library_artwork:
+                pixmap = QtGui.QPixmap()
+                pixmap.loadFromData(self._library_artwork[artist.title])
+                pixmap = pixmap.scaled(img_scale, img_scale,
+                                       aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+            else:
+                pixmap = std_pixmap
+
+            item = QtWidgets.QGraphicsPixmapItem()
+            item.setPixmap(pixmap)
+            item.setPos(self.ITEM_SCALE * (i % self.ITEMS_PER_ROW),
+                        self.ITEM_SCALE * (i // self.ITEMS_PER_ROW) + self.MARGIN)
+            item.setData(0, artist.title)
+
+            scene.addItem(item)
+        scene.mouseReleaseEvent = self.selection_changed
+        self.album_scene = scene
 
     def selection_changed(self, event:QtWidgets.QGraphicsSceneMouseEvent):
         scene: QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
@@ -259,8 +274,7 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         ipr = self.ITEMS_PER_ROW // 2
 
-        width = min(self.ITEM_SCALE * self.ITEMS_PER_ROW, 2*self.ITEM_SCALE*len(albums))
-        scene = QtWidgets.QGraphicsScene(0, 0, width,
+        scene = QtWidgets.QGraphicsScene(0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH,
                             2*self.ITEM_SCALE * (len(albums) // ipr + 1)+self.ITEM_SCALE*0.5)
 
         title = QtWidgets.QGraphicsTextItem(f'Albums by {artist}:')
@@ -353,7 +367,12 @@ class GUIWindow(QtWidgets.QMainWindow):
             if gi.label==glabel:
                 group = gi
                 break
-        queue = gi.coordinator.get_queue()
+        queue = group.coordinator.get_queue()
+        player_status = group.coordinator.get_current_transport_info()
+        if player_status['current_transport_state'] == 'PLAYING':
+            self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPause))
+        else:
+            self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
         self.ui.groupQueueList.clear()
         current_album = ''
         for item in queue:
@@ -405,15 +424,49 @@ class GUIWindow(QtWidgets.QMainWindow):
 
     def change_icon_size(self, index):
         if index==0:
-            self.ITEM_SCALE=200
             self.ITEMS_PER_ROW=10
         elif index==1:
-            self.ITEM_SCALE=400
             self.ITEMS_PER_ROW=5
         elif index==2:
-            self.ITEM_SCALE=700
             self.ITEMS_PER_ROW=3
+        total_margins = (self.ITEMS_PER_ROW-1)*self.MARGIN
+        self.ITEM_SCALE = (self.ui.libraryView.FULL_LIBRARY_WIDTH-total_margins)//self.ITEMS_PER_ROW
         self.build_library()
+
+    def queue_play_pause(self):
+        group = self.current_group()
+
+        player_status = group.coordinator.get_current_transport_info()
+        if player_status['current_transport_state'] == 'PLAYING':
+            group.coordinator.pause()
+            self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
+        else:
+            group.coordinator.play()
+            self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPause))
+
+    def queue_stop(self):
+        group = self.current_group()
+        group.coordinator.stop()
+
+    def queue_prev(self):
+        group = self.current_group()
+        group.coordinator.previous()
+
+    def queue_next(self):
+        group = self.current_group()
+        group.coordinator.next()
+
+
+    def current_group(self):
+        glabel = self.ui.groupList.currentItem().text()
+        self.ui.NowPlayingGroup.setText(glabel)
+        group = None
+        for gi in self.system.groups:
+            if gi.label == glabel:
+                group = gi
+                break
+        return group
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
