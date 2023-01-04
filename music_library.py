@@ -5,7 +5,7 @@ Download album art and store locally for quick access.
 """
 
 import sqlite3
-from PyQt5 import QtCore, QtGui
+import os
 
 INSERT_QUERY = """INSERT INTO album_art
 (artist, album, album_art, date) VALUES (?,?,?,?);"""
@@ -18,7 +18,20 @@ WHERE artist = ? ORDER BY date DESC;"""
 
 def connect_db():
     global db
+    build_table = not os.path.exists('music_library.db')
     db = sqlite3.connect('music_library.db')
+
+    if build_table:
+        print('creating database')
+        cursor = db.cursor()
+        cursor.execute("""CREATE TABLE album_art (
+                            id INTEGER PRIMARY KEY,
+                            artist TEXT NOT NULL,
+                            album TEXT NOT NULL,
+                            album_art BLOB,
+                            date INTEGER);""")
+        cursor.close()
+        db.commit()
 
 def insert_image(artist, album, image, date):
     cursor = db.cursor()
