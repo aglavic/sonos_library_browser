@@ -159,7 +159,20 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         self.setup_sonos()
         self.progress_bar = QtWidgets.QProgressBar()
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                           QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(3)
+        self.progress_bar.setSizePolicy(sizePolicy)
         self.ui.toolBar.addWidget(self.progress_bar)
+        self.ui.toolBar.addWidget(QtWidgets.QLabel('  Volume:'))
+        self.volume_control = QtWidgets.QSlider()
+        self.volume_control.setOrientation(QtCore.Qt.Horizontal)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                           QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(1)
+        self.volume_control.setSizePolicy(sizePolicy)
+        self.volume_control.sliderMoved.connect(self.change_volume)
+        self.ui.toolBar.addWidget(self.volume_control)
 
         self.build_speaker_list()
         self.build_group_list()
@@ -405,6 +418,8 @@ class GUIWindow(QtWidgets.QMainWindow):
                 self.ui.groupQueueList.addItem(f'{artist} | {album}')
             self.ui.groupQueueList.addItem(f'\t{item.title}')
         self.ui.groupQueueList.setCurrentRow(0)
+        cur_vol = group.coordinator.volume
+        self.volume_control.setValue(int(cur_vol))
 
     def update_playing_info(self, index):
         glabel = self.ui.groupList.item(index).text()
@@ -478,6 +493,10 @@ class GUIWindow(QtWidgets.QMainWindow):
     def queue_next(self):
         group = self.current_group()
         group.coordinator.next()
+
+    def change_volume(self, value):
+        group = self.current_group()
+        group.coordinator.volume=value
 
 
     def current_group(self):
