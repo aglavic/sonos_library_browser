@@ -208,7 +208,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.speakerList.clear()
         for i, item in enumerate(self.system.speakers):
             self.ui.speakerList.addItem(f'{item.name} ({item.ip_address})\n\t{item.room}')
-            speaker_type = item.reference.speaker_info.get('model_name', None)
+            #speaker_type = item.reference.speaker_info.get('model_name', None)
 
 
     def build_group_list(self):
@@ -382,7 +382,10 @@ class GUIWindow(QtWidgets.QMainWindow):
                 self.update_playing_info(self.ui.groupList.currentRow())
 
     def update_playing(self, index):
-        glabel = self.ui.groupList.item(index).text()
+        gitem = self.ui.groupList.item(index)
+        if gitem is None:
+            return
+        glabel = gitem.text()
         self.ui.NowPlayingGroup.setText(glabel)
         group = None
         for gi in self.system.groups:
@@ -396,13 +399,19 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.update_playing_info(index)
 
     def update_queue(self, index):
-        glabel = self.ui.groupList.item(index).text()
+        gitem = self.ui.groupList.item(index)
+        if gitem is None:
+            return
+        glabel = gitem.text()
         self.ui.NowPlayingGroup.setText(glabel)
         group = None
         for gi in self.system.groups:
             if gi.label==glabel:
                 group = gi
                 break
+        if group is None:
+            return
+        self.set_group_members(group)
         queue = group.coordinator.get_queue()
         player_status = group.coordinator.get_current_transport_info()
         if player_status['current_transport_state'] == 'PLAYING':
@@ -424,8 +433,21 @@ class GUIWindow(QtWidgets.QMainWindow):
         cur_vol = group.coordinator.volume
         self.volume_control.setValue(int(cur_vol))
 
+    def set_group_members(self, group:SonosGroup):
+        members = group.reference.members
+        mamber_ips = [member.ip_address for member in members]
+        for i in range(self.ui.speakerList.count()):
+            item = self.ui.speakerList.item(i)
+            item_ip = item.text().split('(')[1].split(')')[0]
+            selected=item_ip in mamber_ips
+            item.setSelected(selected)
+
+
     def update_playing_info(self, index):
-        glabel = self.ui.groupList.item(index).text()
+        gitem = self.ui.groupList.item(index)
+        if gitem is None:
+            return
+        glabel = gitem.text()
         self.ui.NowPlayingGroup.setText(glabel)
         group = None
         for gi in self.system.groups:
@@ -507,7 +529,10 @@ class GUIWindow(QtWidgets.QMainWindow):
 
 
     def current_group(self):
-        glabel = self.ui.groupList.currentItem().text()
+        gitem = self.ui.groupList.item(index)
+        if gitem is None:
+            return
+        glabel = gitem.text()
         self.ui.NowPlayingGroup.setText(glabel)
         group = None
         for gi in self.system.groups:
