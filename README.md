@@ -20,11 +20,12 @@ This GUI initially creates a database of all album artwork in the library
 and stores it locally as SQlite database. It also interprets the ID3 tags
 of the library files to get the publishing date (Sonos does not store this.)
 
-The library browser shows the Sonos groups, their queue and playing item:
-![Now Playing](screenshots/now_playing.png)
-
-On the Library tab all artists are shown with the artwork of the latest album:
+The GUI has a Qt interface with the library in the center and movable dock widgets
+on the left and right containing the sonos speakers, active groups, playing
+title information and queue:
 ![Now Playing](screenshots/library.png)
+
+The first start may take a bit longer to build the album art library.
 
 Upon clicking on an artist the album list opens instantly, 
 including release date:
