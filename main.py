@@ -157,6 +157,9 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.actionStop.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaStop))
         self.ui.actionForward.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaSkipForward))
 
+        self.settings = QtCore.QSettings( 'Artur Glavic', 'Sonos Library Browser')
+        self.load_settings()
+
         self.setup_sonos()
         self.progress_bar = QtWidgets.QProgressBar()
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
@@ -513,6 +516,15 @@ class GUIWindow(QtWidgets.QMainWindow):
                 break
         return group
 
+    def load_settings(self):
+        if self.settings.value("mainWindow/geometry") is not None:
+            self.restoreGeometry(self.settings.value("mainWindow/geometry"))
+            self.restoreState(self.settings.value("mainWindow/state"))
+
+    def closeEvent(self, event:QtGui.QCloseEvent):
+        self.settings.setValue("mainWindow/geometry", self.saveGeometry())
+        self.settings.setValue("mainWindow/state", self.saveState())
+        super().closeEvent(event)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
