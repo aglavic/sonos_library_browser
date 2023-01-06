@@ -128,7 +128,7 @@ class LibraryImageBuilder(QtCore.QObject):
                             else:
                                 try:
                                     date = int(str(rmp3.tag.recording_date))
-                                except ValueError:
+                                except (ValueError, AttributeError):
                                     date = 0
                                 mdb.insert_image(artist.title, album.title, img_data, date)
                         if date>last_date:
