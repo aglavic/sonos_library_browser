@@ -1,4 +1,5 @@
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
+
 
 class AlbumArtworkLabel(QtWidgets.QLabel):
     def setPixmap(self, pixmap):
@@ -29,3 +30,14 @@ class LibraryView(QtWidgets.QGraphicsView):
         s = w/self.FULL_LIBRARY_WIDTH
         T = QtGui.QTransform(s, 0., 0., s, 0., 0.)
         self.setTransform(T)
+
+    key_press_forward = QtCore.pyqtSignal(QtGui.QKeyEvent)
+    key_release_forward = QtCore.pyqtSignal(QtGui.QKeyEvent)
+
+    def keyPressEvent(self, event:QtGui.QKeyEvent):
+        self.key_press_forward.emit(event)
+        super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event:QtGui.QKeyEvent):
+        self.key_release_forward.emit(event)
+        super().keyPressEvent(event)

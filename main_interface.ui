@@ -17,6 +17,9 @@
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <widget class="LibraryView" name="libraryView">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAlwaysOn</enum>
       </property>
@@ -190,6 +193,13 @@
          <string>large</string>
         </property>
        </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="artistFilter">
+       <property name="placeholderText">
+        <string>filter artists</string>
+       </property>
       </widget>
      </item>
     </layout>
@@ -438,11 +448,27 @@
    <hints>
     <hint type="sourcelabel">
      <x>759</x>
-     <y>489</y>
+     <y>464</y>
     </hint>
     <hint type="destinationlabel">
      <x>674</x>
      <y>500</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>artistFilter</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>filter_artists()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>784</x>
+     <y>485</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>687</x>
+     <y>491</y>
     </hint>
    </hints>
   </connection>
@@ -454,5 +480,6 @@
   <slot>queue_prev()</slot>
   <slot>queue_stop()</slot>
   <slot>queue_play_pause()</slot>
+  <slot>filter_artists()</slot>
  </slots>
 </ui>

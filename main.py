@@ -157,6 +157,9 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.actionStop.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaStop))
         self.ui.actionForward.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaSkipForward))
 
+        self.ui.libraryView.key_press_forward.connect(self.ui.artistFilter.keyPressEvent)
+        self.ui.libraryView.key_release_forward.connect(self.ui.artistFilter.keyReleaseEvent)
+
         self.settings = QtCore.QSettings( 'Artur Glavic', 'Sonos Library Browser')
         self.load_settings()
 
@@ -217,10 +220,24 @@ class GUIWindow(QtWidgets.QMainWindow):
             self.ui.groupList.addItem(item.label)
         self.ui.groupList.setCurrentRow(0)
 
+    def filter_artists(self):
+        self.build_library()
+
+    def filtered_artists(self):
+        artist_filter = str(self.ui.artistFilter.text()).strip().lower()
+        music_library=self.system.speakers[0].reference.music_library
+        if len(artist_filter)==1:
+            artists = [a for a in music_library.get_album_artists(max_items=1000)
+                       if a.title.lower().startswith(artist_filter)]
+        else:
+            artists = [a for a in music_library.get_album_artists(max_items=1000)
+                       if artist_filter in a.title.lower()]
+        artists.sort(key=lambda a: a.title)
+        return artists
+
     def build_library(self):
         music_library=self.system.speakers[0].reference.music_library
-        artists = list(music_library.get_album_artists(max_items=1000))
-        artists.sort(key=lambda a: a.title)
+        artists = self.filtered_artists()
 
         scene = QtWidgets.QGraphicsScene(0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH,
                                          self.ITEM_SCALE*(len(artists)//self.ITEMS_PER_ROW+1))
@@ -262,6 +279,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             self._thread.wait()
             del(self._thread)
             mdb.connect_db()
+            self.ui.libraryView.setEnabled(True)
 
     def build_artist_icons(self):
         scene: QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
@@ -269,9 +287,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         std_icon = self.style().standardIcon(QtWidgets.QStyle.SP_FileIcon)
         std_pixmap = std_icon.pixmap(img_scale, img_scale)
 
-        music_library=self.system.speakers[0].reference.music_library
-        artists = list(music_library.get_album_artists(max_items=1000))
-        artists.sort(key=lambda a: a.title)
+        artists = self.filtered_artists()
 
         # build images
         for i, artist in enumerate(artists):

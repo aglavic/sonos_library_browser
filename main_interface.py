@@ -20,6 +20,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.centralwidget)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.libraryView = LibraryView(self.centralwidget)
+        self.libraryView.setEnabled(False)
         self.libraryView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.libraryView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.libraryView.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
@@ -92,6 +93,9 @@ class Ui_MainWindow(object):
         self.iconSizeBox.addItem("")
         self.iconSizeBox.addItem("")
         self.verticalLayout_2.addWidget(self.iconSizeBox)
+        self.artistFilter = QtWidgets.QLineEdit(self.dockWidgetContents_3)
+        self.artistFilter.setObjectName("artistFilter")
+        self.verticalLayout_2.addWidget(self.artistFilter)
         self.settingsDock.setWidget(self.dockWidgetContents_3)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.settingsDock)
         self.nowPlayingDock = QtWidgets.QDockWidget(MainWindow)
@@ -172,6 +176,7 @@ class Ui_MainWindow(object):
         self.actionStop.triggered.connect(MainWindow.queue_stop) # type: ignore
         self.actionForward.triggered.connect(MainWindow.queue_next) # type: ignore
         self.iconSizeBox.currentIndexChanged['int'].connect(MainWindow.change_icon_size) # type: ignore
+        self.artistFilter.textEdited['QString'].connect(MainWindow.filter_artists) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -185,6 +190,7 @@ class Ui_MainWindow(object):
         self.iconSizeBox.setItemText(0, _translate("MainWindow", "small"))
         self.iconSizeBox.setItemText(1, _translate("MainWindow", "medium"))
         self.iconSizeBox.setItemText(2, _translate("MainWindow", "large"))
+        self.artistFilter.setPlaceholderText(_translate("MainWindow", "filter artists"))
         self.nowPlayingDock.setWindowTitle(_translate("MainWindow", "Playing..."))
         self.NowPlayingGroup.setToolTip(_translate("MainWindow", "Active Groupe"))
         self.NowPlayingGroup.setText(_translate("MainWindow", "{?}"))
