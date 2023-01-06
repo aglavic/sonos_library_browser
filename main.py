@@ -430,7 +430,7 @@ class GUIWindow(QtWidgets.QMainWindow):
                 self.ui.groupQueueList.addItem(f'{artist} | {album}')
             self.ui.groupQueueList.addItem(f'\t{item.title}')
         self.ui.groupQueueList.setCurrentRow(0)
-        cur_vol = group.coordinator.volume
+        cur_vol = group.reference.volume
         self.volume_control.setValue(int(cur_vol))
 
     def set_group_members(self, group:SonosGroup):
@@ -525,15 +525,14 @@ class GUIWindow(QtWidgets.QMainWindow):
 
     def change_volume(self, value):
         group = self.current_group()
-        group.coordinator.volume=value
+        group.reference.volume=value
 
 
     def current_group(self):
-        gitem = self.ui.groupList.item(index)
+        gitem = self.ui.groupList.currentItem()
         if gitem is None:
             return
         glabel = gitem.text()
-        self.ui.NowPlayingGroup.setText(glabel)
         group = None
         for gi in self.system.groups:
             if gi.label == glabel:
