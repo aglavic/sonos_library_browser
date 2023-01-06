@@ -1,20 +1,24 @@
 from PyQt5 import QtWidgets, QtGui
 
 class AlbumArtworkLabel(QtWidgets.QLabel):
+    def setPixmap(self, pixmap):
+        super().setPixmap(pixmap)
+        self.updateMargins()
 
     def resizeEvent(self, *args, **kwargs):
         self.updateMargins()
         super().resizeEvent(*args, **kwargs)
 
     def updateMargins(self):
+        img_ratio = self.pixmap().width()/max(1, self.pixmap().height())
         w = self.width()
-        h = self.height()
+        h = self.height()*img_ratio
 
         if w>h:
-            m = (w-h)//2
+            m = int((w-h)/2)
             self.setContentsMargins(m, 0, m, 0)
         elif h>w:
-            m = (h-w)//2
+            m = int((h-w)/2)
             self.setContentsMargins(0, m, 0, m)
 
 class LibraryView(QtWidgets.QGraphicsView):

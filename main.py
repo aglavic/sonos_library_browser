@@ -450,7 +450,11 @@ class GUIWindow(QtWidgets.QMainWindow):
             return
 
         if track.album_art not in self.image_cache:
-            data = urllib.request.urlopen(track.album_art).read()
+            try:
+                data = urllib.request.urlopen(track.album_art).read()
+            except Exception as e:
+                print(e)
+                data = None
             self.image_cache[track.album_art] = data
         img_data = self.image_cache[track.album_art]
         pixmap = QtGui.QPixmap()
