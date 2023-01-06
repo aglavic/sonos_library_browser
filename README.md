@@ -46,8 +46,8 @@ have trouble to run it.
 
 ## Installation
 
-Currently, I don't support any binary distributions 
-(although building windows .exe is certainly possible).
+If you just want to try the GUI on Windows and hava a setup like me, with 
+sonos library on a NAS, just try the standalone exe from the github release.
 
 To install, copy the repository, create an anaconda environment with the necessary requirements
 (see conda.yml) and run ```python main.py``` from the root folder.
