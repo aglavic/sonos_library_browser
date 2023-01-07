@@ -140,6 +140,7 @@ class GUIWindow(QtWidgets.QMainWindow):
     ALBUMS_PER_ROW = 6
     ITEM_SCALE = 10
     MARGIN = 5
+    _last_selected_track = ''
 
     def __init__(self):
         super().__init__()
@@ -196,14 +197,17 @@ class GUIWindow(QtWidgets.QMainWindow):
 
     def build_speaker_list(self):
         self.ui.speakerList.clear()
-        for i, item in enumerate(self.system.speakers):
+        slist = [(int(s.ip_address.split('.')[-1]), s) for s in self.system.speakers]
+        slist.sort()
+        for i, (ip, item) in enumerate(slist):
             self.ui.speakerList.addItem(f"{item.name} ({item.ip_address})\n\t{item.room}")
-            # speaker_type = item.reference.speaker_info.get('model_name', None)
 
     def build_group_list(self):
         self.ui.groupList.clear()
-        for i, item in enumerate(self.system.groups):
-            self.ui.groupList.addItem(item.label)
+        glist = [g.label for g in self.system.groups]
+        glist.sort()
+        for i, label in enumerate(glist):
+            self.ui.groupList.addItem(label)
         self.ui.groupList.setCurrentRow(0)
 
     def filter_artists(self):
@@ -434,18 +438,21 @@ class GUIWindow(QtWidgets.QMainWindow):
                 current_album = album
                 self.ui.groupQueueList.addItem(f"{artist} | {album}")
             self.ui.groupQueueList.addItem(f"\t{title}")
-        self.ui.groupQueueList.setCurrentRow(0)
         cur_vol = group.reference.volume
         self.volume_control.setValue(int(cur_vol))
 
     def set_group_members(self, group: SonosGroup):
         members = group.reference.members
         mamber_ips = [member.ip_address for member in members]
+        member_brush = QtGui.QBrush(QtGui.QColor(100, 200, 100))
+        other_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         for i in range(self.ui.speakerList.count()):
-            item = self.ui.speakerList.item(i)
+            item:QtWidgets.QListWidgetItem = self.ui.speakerList.item(i)
             item_ip = item.text().split("(")[1].split(")")[0]
-            selected = item_ip in mamber_ips
-            item.setSelected(selected)
+            if item_ip in mamber_ips:
+                item.setBackground(member_brush)
+            else:
+                item.setBackground(other_brush)
 
     def update_playing_info(self, index):
         gitem = self.ui.groupList.item(index)
@@ -464,11 +471,17 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         track = group.now_playing()
 
-        if self.ui.groupQueueList.currentItem().text() != f"\t{track.title}":
+        if track.title != self._last_selected_track:
+            playing_brush = QtGui.QBrush(QtGui.QColor(100, 200, 100))
+            other_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
+
             for i in range(self.ui.groupQueueList.count()):
-                if self.ui.groupQueueList.item(i).text() == f"\t{track.title}":
-                    self.ui.groupQueueList.setCurrentRow(i)
-                    break
+                item =  self.ui.groupQueueList.item(i)
+                if item.text() == f"\t{track.title}":
+                    item.setBackground(playing_brush)
+                else:
+                    item.setBackground(other_brush)
+            self._last_selected_track = track.title
 
         self.ui.NowPlayingTrack.setText(track.title)
         self.ui.NowPlayingAlbum.setText(track.album)

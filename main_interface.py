@@ -23,7 +23,7 @@ class Ui_MainWindow(object):
         self.libraryView.setEnabled(False)
         self.libraryView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.libraryView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.libraryView.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
+        self.libraryView.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.libraryView.setObjectName("libraryView")
         self.verticalLayout_3.addWidget(self.libraryView)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -49,7 +49,6 @@ class Ui_MainWindow(object):
         self.label_7.setObjectName("label_7")
         self.verticalLayout_6.addWidget(self.label_7)
         self.speakerList = QtWidgets.QListWidget(self.dockWidgetContents)
-        self.speakerList.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         self.speakerList.setObjectName("speakerList")
         self.verticalLayout_6.addWidget(self.speakerList)
         self.groupsDock.setWidget(self.dockWidgetContents)
@@ -169,13 +168,13 @@ class Ui_MainWindow(object):
         self.toolBar.addAction(self.actionForward)
 
         self.retranslateUi(MainWindow)
-        self.groupList.currentRowChanged["int"].connect(MainWindow.update_playing)  # type: ignore
-        self.actionBack.triggered.connect(MainWindow.queue_prev)  # type: ignore
-        self.actionPlay_Pause.triggered.connect(MainWindow.queue_play_pause)  # type: ignore
-        self.actionStop.triggered.connect(MainWindow.queue_stop)  # type: ignore
-        self.actionForward.triggered.connect(MainWindow.queue_next)  # type: ignore
-        self.iconSizeBox.currentIndexChanged["int"].connect(MainWindow.change_icon_size)  # type: ignore
-        self.artistFilter.textEdited["QString"].connect(MainWindow.filter_artists)  # type: ignore
+        self.groupList.currentRowChanged['int'].connect(MainWindow.update_playing) # type: ignore
+        self.actionBack.triggered.connect(MainWindow.queue_prev) # type: ignore
+        self.actionPlay_Pause.triggered.connect(MainWindow.queue_play_pause) # type: ignore
+        self.actionStop.triggered.connect(MainWindow.queue_stop) # type: ignore
+        self.actionForward.triggered.connect(MainWindow.queue_next) # type: ignore
+        self.iconSizeBox.currentIndexChanged['int'].connect(MainWindow.change_icon_size) # type: ignore
+        self.artistFilter.textEdited['QString'].connect(MainWindow.filter_artists) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -206,6 +205,4 @@ class Ui_MainWindow(object):
         self.actionPlay_Pause.setText(_translate("MainWindow", "Play/Pause"))
         self.actionForward.setText(_translate("MainWindow", "Forward"))
         self.actionStop.setText(_translate("MainWindow", "Stop"))
-
-
 from simple_widgets import AlbumArtworkLabel, LibraryView
