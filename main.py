@@ -146,6 +146,7 @@ class GUIWindow(QtWidgets.QMainWindow):
     ITEM_SCALE = 10
     MARGIN = 5
     _last_selected_track = ""
+    _changed_label = None
 
     def __init__(self):
         super().__init__()
@@ -236,10 +237,11 @@ class GUIWindow(QtWidgets.QMainWindow):
         artists = self.filtered_artists()
 
         scene = QtWidgets.QGraphicsScene(
-            0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH, self.ITEM_SCALE * (len(artists) // self.ITEMS_PER_ROW)
+            0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH, self.ITEM_SCALE * ((len(artists)-1) // self.ITEMS_PER_ROW +1)
         )
 
         # text labels
+        self._artist_labels = {}
         for i, artist in enumerate(artists):
             label = QtWidgets.QGraphicsTextItem()
             label.setHtml(f'<div style="background: rgba(255, 255, 255, 200);"><center>{artist.title}</center></div>')
@@ -248,9 +250,11 @@ class GUIWindow(QtWidgets.QMainWindow):
             label.setData(0, artist.title)
             label.setZValue(5.0)
             scene.addItem(label)
+            self._artist_labels[artist.title] = label
 
         self.ui.libraryView.setScene(scene)
         scene.mouseReleaseEvent = self.selection_changed
+        scene.mouseMoveEvent = self.hover_album
         self.album_scene = scene
 
         if self._library_artwork is None:
@@ -290,7 +294,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             del self._thread
             mdb.connect_db()
             self.unblock_library()
-            self.progress_bar.setEnabled(False)
+            self.progress_bar.setValue(0)
         elif progress > (self._last_progress + 0.1):
             self.build_artist_icons(display_range=(self._last_progress, progress))
             self._last_progress = progress
@@ -350,20 +354,20 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         ipr = self.ALBUMS_PER_ROW
         block_width = self.ui.libraryView.FULL_LIBRARY_WIDTH // ipr
+        img_scale = int(block_width * 3 / 5)
+        img_offset = int(block_width * 1 / 10)
 
         scene = QtWidgets.QGraphicsScene(
             0,
             0,
             self.ui.libraryView.FULL_LIBRARY_WIDTH,
-            block_width * (len(albums) // ipr) + block_width * 0.5,
+            block_width * ((len(albums)-1) // ipr + 1) + block_width * 0.5,
         )
 
         title = QtWidgets.QGraphicsTextItem(f"Albums by {artist}:")
         title.setPos(10, 5)
         scene.addItem(title)
 
-        img_scale = int(block_width * 3 / 5)
-        img_offset = int(block_width * 1 / 10)
         album_data = []
         for album in albums:
             img_data, date = mdb.get_image(artist, album.title)
@@ -427,6 +431,31 @@ class GUIWindow(QtWidgets.QMainWindow):
                     group.coordinator.play()
                 self.update_queue(self.ui.groupList.currentRow())
                 self.update_playing_info(self.ui.groupList.currentRow())
+
+    def hover_album(self, event: QtWidgets.QGraphicsSceneMouseEvent):
+        scene: QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
+        trans = self.ui.libraryView.transform()
+        item = scene.itemAt(event.scenePos(), trans)
+        if item is None:
+            if self._changed_label:
+                self._changed_label[0].setFont(self._changed_label[1])
+                self._changed_label = None
+            return
+        label = self._artist_labels.get(item.data(0), None)
+        if label is None:
+            return
+        elif self._changed_label:
+            if label is self._changed_label[0]:
+                return
+            else:
+                self._changed_label[0].setFont(self._changed_label[1])
+                self._changed_label = None
+        font:QtGui.QFont = label.font()
+        bfont = QtGui.QFont(font)
+        bfont.setPointSizeF(bfont.pointSizeF()*1.5)
+        bfont.setBold(True)
+        label.setFont(bfont)
+        self._changed_label=(label, font)
 
     def update_playing(self, index):
         gitem = self.ui.groupList.item(index)
