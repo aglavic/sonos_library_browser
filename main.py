@@ -140,7 +140,7 @@ class GUIWindow(QtWidgets.QMainWindow):
     ALBUMS_PER_ROW = 6
     ITEM_SCALE = 10
     MARGIN = 5
-    _last_selected_track = ''
+    _last_selected_track = ""
 
     def __init__(self):
         super().__init__()
@@ -176,8 +176,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.build_speaker_list()
         self.build_group_list()
         self._library_artwork = None
-        # calculate item scale and build library
-        self.change_icon_size(self.ui.iconSizeBox.currentIndex())
+        self.build_library()
 
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.on_timer)
@@ -197,7 +196,7 @@ class GUIWindow(QtWidgets.QMainWindow):
 
     def build_speaker_list(self):
         self.ui.speakerList.clear()
-        slist = [(int(s.ip_address.split('.')[-1]), s) for s in self.system.speakers]
+        slist = [(int(s.ip_address.split(".")[-1]), s) for s in self.system.speakers]
         slist.sort()
         for i, (ip, item) in enumerate(slist):
             self.ui.speakerList.addItem(f"{item.name} ({item.ip_address})\n\t{item.room}")
@@ -443,13 +442,13 @@ class GUIWindow(QtWidgets.QMainWindow):
 
     def set_group_members(self, group: SonosGroup):
         members = group.reference.members
-        mamber_ips = [member.ip_address for member in members]
+        member_ips = [member.ip_address for member in members]
         member_brush = QtGui.QBrush(QtGui.QColor(100, 200, 100))
         other_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         for i in range(self.ui.speakerList.count()):
-            item:QtWidgets.QListWidgetItem = self.ui.speakerList.item(i)
+            item: QtWidgets.QListWidgetItem = self.ui.speakerList.item(i)
             item_ip = item.text().split("(")[1].split(")")[0]
-            if item_ip in mamber_ips:
+            if item_ip in member_ips:
                 item.setBackground(member_brush)
             else:
                 item.setBackground(other_brush)
@@ -476,7 +475,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             other_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
 
             for i in range(self.ui.groupQueueList.count()):
-                item =  self.ui.groupQueueList.item(i)
+                item = self.ui.groupQueueList.item(i)
                 if item.text() == f"\t{track.title}":
                     item.setBackground(playing_brush)
                 else:
@@ -503,7 +502,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         pixmap.loadFromData(img_data)
         self.ui.NowPlayingArt.setPixmap(pixmap)
 
-    def change_icon_size(self, index):
+    def _set_icon_size(self, index):
         if index == 0:
             self.ITEMS_PER_ROW = 10
             self.ALBUMS_PER_ROW = 6
@@ -515,6 +514,9 @@ class GUIWindow(QtWidgets.QMainWindow):
             self.ALBUMS_PER_ROW = 2
         total_margins = (self.ITEMS_PER_ROW - 1) * self.MARGIN
         self.ITEM_SCALE = (self.ui.libraryView.FULL_LIBRARY_WIDTH - total_margins) // self.ITEMS_PER_ROW
+
+    def change_icon_size(self, index):
+        self._set_icon_size(index)
         self.build_library()
 
     def queue_play_pause(self):
@@ -557,6 +559,10 @@ class GUIWindow(QtWidgets.QMainWindow):
         return group
 
     def load_settings(self):
+        self._set_icon_size(self.settings.value("mainWindow/icon_size", 0))
+        self.ui.iconSizeBox.blockSignals(True)
+        self.ui.iconSizeBox.setCurrentIndex(self.settings.value("mainWindow/icon_size", 0))
+        self.ui.iconSizeBox.blockSignals(False)
         if self.settings.value("mainWindow/geometry") is not None:
             self.restoreGeometry(self.settings.value("mainWindow/geometry"))
             self.restoreState(self.settings.value("mainWindow/state"))
@@ -564,6 +570,7 @@ class GUIWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event: QtGui.QCloseEvent):
         self.settings.setValue("mainWindow/geometry", self.saveGeometry())
         self.settings.setValue("mainWindow/state", self.saveState())
+        self.settings.setValue("mainWindow/icon_size", self.ui.iconSizeBox.currentIndex())
         super().closeEvent(event)
 
 
