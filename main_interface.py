@@ -20,7 +20,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.centralwidget)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.libraryView = LibraryView(self.centralwidget)
-        self.libraryView.setEnabled(False)
         self.libraryView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.libraryView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.libraryView.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)

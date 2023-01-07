@@ -17,9 +17,6 @@
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <widget class="LibraryView" name="libraryView">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAlwaysOn</enum>
       </property>
