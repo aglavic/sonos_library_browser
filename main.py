@@ -1,12 +1,13 @@
-import sys
 import os
+import sys
 import urllib.request
+
 from dataclasses import dataclass, fields
 
-import soco
-import soco.groups
-import soco.data_structures
 import eyed3
+import soco
+import soco.data_structures
+import soco.groups
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -14,12 +15,6 @@ import main_interface
 import music_library as mdb
 
 BASE_PATH = os.path.abspath(os.path.dirname(__file__))
-SPEAKER_ICONS = {
-    #'Sonos Ray': os.path.join(BASE_PATH, 'icons', 'move.png'),
-    #'Sonos Beam': os.path.join(BASE_PATH, 'icons', 'move.png'),
-    'Sonos Move': os.path.join(BASE_PATH, 'icons', 'move.png'),
-    #'Sonos Port': os.path.join(BASE_PATH, 'icons', 'move.png'),
-    }
 
 
 @dataclass
@@ -35,10 +30,8 @@ class Track:
     @classmethod
     def from_dict(cls, env):
         flds = [f.name for f in fields(cls)]
-        return cls(**{
-            k: v for k, v in env.items()
-            if k in flds
-        })
+        return cls(**{k: v for k, v in env.items() if k in flds})
+
 
 @dataclass
 class SonosSpeaker:
@@ -46,6 +39,7 @@ class SonosSpeaker:
     name: str
     room: str
     reference: soco.SoCo
+
 
 @dataclass
 class SonosGroup:
@@ -56,26 +50,30 @@ class SonosGroup:
     def now_playing(self) -> Track:
         return Track.from_dict(self.coordinator.get_current_track_info())
 
+
 @dataclass
 class SonosSystem:
     speakers: list[SonosSpeaker]
 
     @property
-    def reference(self)->soco.SoCo:
+    def reference(self) -> soco.SoCo:
         return self.speakers[0].reference.group.coordinator
 
     @property
-    def groups(self)->list[SonosGroup]:
+    def groups(self) -> list[SonosGroup]:
         out = []
         for item in self.reference.all_groups:
-            group=SonosGroup(item.short_label, item.coordinator, item)
+            group = SonosGroup(item.short_label, item.coordinator, item)
             out.append(group)
         return out
 
     def now_playing(self):
+        output = []
         for g in self.groups:
             t = g.now_playing()
-            #print(f'{g.label}: {t}')
+            output.append((g, t))
+        return output
+
 
 def main():
     app = QtWidgets.QApplication([])
@@ -85,7 +83,6 @@ def main():
 
 
 class LibraryImageBuilder(QtCore.QObject):
-
     def __init__(self, music_library, artists):
         super().__init__()
         self.music_library = music_library
@@ -97,45 +94,42 @@ class LibraryImageBuilder(QtCore.QObject):
         artists = self.artists
 
         # collect icons
-        self.icon_data={}
+        self.icon_data = {}
         for i, artist in enumerate(artists):
-            img_data, date = mdb.get_last_image(artist.title)
-            if img_data is not None:
-                self.icon_data[artist.title] = img_data
-            else:
-                last_date = -1
-                albums = music_library.get_albums_for_artist(artist.title)
-                for album in albums:
-                    try:
-                        img_data, date = mdb.get_image(artist.title, album.title)
-                        if not img_data:
-                            rtrack = music_library.get_tracks_for_album(artist.title, album.title,
-                                                                        full_album_art_uri=True).pop()
-                            uri = rtrack.album_art_uri
-                            rtfile = rtrack.get_uri()
-                            if rtfile.startswith('x-file-cifs:'):
-                                rtpath = urllib.request.unquote(rtfile.split(':',1)[1])
-                                rmp3 = eyed3.load(rtpath)
+            last_date = -1
+            albums = music_library.get_albums_for_artist(artist.title)
+            for album in albums:
+                try:
+                    img_data, date = mdb.get_image(artist.title, album.title)
+                    if not img_data:
+                        rtrack = music_library.get_tracks_for_album(
+                            artist.title, album.title, full_album_art_uri=True
+                        ).pop()
+                        uri = rtrack.album_art_uri
+                        rtfile = rtrack.get_uri()
+                        if rtfile.startswith("x-file-cifs:"):
+                            rtpath = urllib.request.unquote(rtfile.split(":", 1)[1])
+                            rmp3 = eyed3.load(rtpath)
 
-                    except Exception as e:
-                        print(e)
-                    else:
-                        if not img_data:
+                except Exception as e:
+                    print(e)
+                else:
+                    if not img_data:
+                        try:
+                            img_data = urllib.request.urlopen(uri).read()
+                        except Exception as e:
+                            print(f"Could not fetch artwork for {artist.title} | {album.title}, error: {e}")
+                        else:
                             try:
-                                img_data = urllib.request.urlopen(uri).read()
-                            except Exception as e:
-                                print(e)
-                            else:
-                                try:
-                                    date = int(str(rmp3.tag.recording_date))
-                                except (ValueError, AttributeError):
-                                    date = 0
-                                mdb.insert_image(artist.title, album.title, img_data, date)
-                        if date>last_date:
-                            self.icon_data[artist.title] = img_data
-                            last_date = date
-            self.download_progress.emit((i+1)/len(artists))
-        print('Thread finished')
+                                date = int(str(rmp3.tag.recording_date))
+                            except (ValueError, AttributeError):
+                                print(rmp3.tag)
+                                date = 0
+                            mdb.insert_image(artist.title, album.title, img_data, date)
+                    if date > last_date:
+                        self.icon_data[artist.title] = img_data
+                        last_date = date
+            self.download_progress.emit((i + 1) / len(artists))
 
     download_progress = QtCore.pyqtSignal(float)
 
@@ -160,21 +154,19 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.libraryView.key_press_forward.connect(self.ui.artistFilter.keyPressEvent)
         self.ui.libraryView.key_release_forward.connect(self.ui.artistFilter.keyReleaseEvent)
 
-        self.settings = QtCore.QSettings( 'Artur Glavic', 'Sonos Library Browser')
+        self.settings = QtCore.QSettings("Artur Glavic", "Sonos Library Browser")
         self.load_settings()
 
         self.setup_sonos()
         self.progress_bar = QtWidgets.QProgressBar()
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                           QtWidgets.QSizePolicy.Fixed)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(3)
         self.progress_bar.setSizePolicy(sizePolicy)
         self.ui.toolBar.addWidget(self.progress_bar)
-        self.ui.toolBar.addWidget(QtWidgets.QLabel('  Volume:'))
+        self.ui.toolBar.addWidget(QtWidgets.QLabel("  Volume:"))
         self.volume_control = QtWidgets.QSlider()
         self.volume_control.setOrientation(QtCore.Qt.Horizontal)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                           QtWidgets.QSizePolicy.Fixed)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(1)
         self.volume_control.setSizePolicy(sizePolicy)
         self.volume_control.sliderMoved.connect(self.change_volume)
@@ -197,22 +189,16 @@ class GUIWindow(QtWidgets.QMainWindow):
         speakers = []
         for item in soco.discover():
             si = item.get_speaker_info()
-            speaker = SonosSpeaker(item.ip_address,
-                                   si['model_name'],
-                                   si['zone_name'],
-                                   item
-                                   )
+            speaker = SonosSpeaker(item.ip_address, si["model_name"], si["zone_name"], item)
             speakers.append(speaker)
         system = SonosSystem(speakers)
-        system.now_playing()
         self.system = system
 
     def build_speaker_list(self):
         self.ui.speakerList.clear()
         for i, item in enumerate(self.system.speakers):
-            self.ui.speakerList.addItem(f'{item.name} ({item.ip_address})\n\t{item.room}')
-            #speaker_type = item.reference.speaker_info.get('model_name', None)
-
+            self.ui.speakerList.addItem(f"{item.name} ({item.ip_address})\n\t{item.room}")
+            # speaker_type = item.reference.speaker_info.get('model_name', None)
 
     def build_group_list(self):
         self.ui.groupList.clear()
@@ -225,31 +211,30 @@ class GUIWindow(QtWidgets.QMainWindow):
 
     def filtered_artists(self):
         artist_filter = str(self.ui.artistFilter.text()).strip().lower()
-        music_library=self.system.speakers[0].reference.music_library
-        if len(artist_filter)==1:
-            artists = [a for a in music_library.get_album_artists(max_items=1000)
-                       if a.title.lower().startswith(artist_filter)]
+        music_library = self.system.speakers[0].reference.music_library
+        if len(artist_filter) == 1:
+            artists = [
+                a for a in music_library.get_album_artists(max_items=1000) if a.title.lower().startswith(artist_filter)
+            ]
         else:
-            artists = [a for a in music_library.get_album_artists(max_items=1000)
-                       if artist_filter in a.title.lower()]
+            artists = [a for a in music_library.get_album_artists(max_items=1000) if artist_filter in a.title.lower()]
         artists.sort(key=lambda a: a.title)
         return artists
 
     def build_library(self):
-        music_library=self.system.speakers[0].reference.music_library
+        music_library = self.system.speakers[0].reference.music_library
         artists = self.filtered_artists()
 
-        scene = QtWidgets.QGraphicsScene(0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH,
-                                         self.ITEM_SCALE*(len(artists)//self.ITEMS_PER_ROW+1))
+        scene = QtWidgets.QGraphicsScene(
+            0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH, self.ITEM_SCALE * (len(artists) // self.ITEMS_PER_ROW + 1)
+        )
 
-        labels = {}
         # text labels
         for i, artist in enumerate(artists):
-            label=QtWidgets.QGraphicsTextItem()
+            label = QtWidgets.QGraphicsTextItem()
             label.setHtml(f'<div style="background: rgba(255, 255, 255, 200);"><center>{artist.title}</center></div>')
-            label.setPos(self.ITEM_SCALE*(i%self.ITEMS_PER_ROW),
-                         self.ITEM_SCALE*(i//self.ITEMS_PER_ROW))
-            label.setTextWidth(self.ITEM_SCALE-2*self.MARGIN)
+            label.setPos(self.ITEM_SCALE * (i % self.ITEMS_PER_ROW), self.ITEM_SCALE * (i // self.ITEMS_PER_ROW))
+            label.setTextWidth(self.ITEM_SCALE - 2 * self.MARGIN)
             label.setData(0, artist.title)
             label.setZValue(5.0)
             scene.addItem(label)
@@ -262,22 +247,22 @@ class GUIWindow(QtWidgets.QMainWindow):
 
             self._thread = QtCore.QThread()
             self._image_builder.moveToThread(self._thread)
-            self.progress_bar.setStatusTip('Loading Albums')
+            self.progress_bar.setStatusTip("Loading Albums")
             self._thread.started.connect(self._image_builder.build_library_images)
             self._thread.start()
         else:
             self.build_artist_icons()
 
     def update_download(self, progress):
-        self.progress_bar.setValue(int(progress*100))
+        self.progress_bar.setValue(int(progress * 100))
 
         if progress == 1.0:
             self._library_artwork = self._image_builder.icon_data
             self.build_artist_icons()
-            del(self._image_builder)
+            del self._image_builder
             self._thread.quit()
             self._thread.wait()
-            del(self._thread)
+            del self._thread
             mdb.connect_db()
             self.ui.libraryView.setEnabled(True)
 
@@ -294,22 +279,22 @@ class GUIWindow(QtWidgets.QMainWindow):
             if artist.title in self._library_artwork:
                 pixmap = QtGui.QPixmap()
                 pixmap.loadFromData(self._library_artwork[artist.title])
-                pixmap = pixmap.scaled(img_scale, img_scale,
-                                       aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+                pixmap = pixmap.scaled(img_scale, img_scale, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
             else:
                 pixmap = std_pixmap
 
             item = QtWidgets.QGraphicsPixmapItem()
             item.setPixmap(pixmap)
-            item.setPos(self.ITEM_SCALE * (i % self.ITEMS_PER_ROW),
-                        self.ITEM_SCALE * (i // self.ITEMS_PER_ROW) + self.MARGIN)
+            item.setPos(
+                self.ITEM_SCALE * (i % self.ITEMS_PER_ROW), self.ITEM_SCALE * (i // self.ITEMS_PER_ROW) + self.MARGIN
+            )
             item.setData(0, artist.title)
 
             scene.addItem(item)
         scene.mouseReleaseEvent = self.selection_changed
         self.album_scene = scene
 
-    def selection_changed(self, event:QtWidgets.QGraphicsSceneMouseEvent):
+    def selection_changed(self, event: QtWidgets.QGraphicsSceneMouseEvent):
         scene: QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
         trans = self.ui.libraryView.transform()
         item = scene.itemAt(event.scenePos(), trans)
@@ -322,12 +307,16 @@ class GUIWindow(QtWidgets.QMainWindow):
         albums = list(self.system.speakers[0].reference.music_library.get_albums_for_artist(artist))
 
         ipr = self.ALBUMS_PER_ROW
-        block_width = self.ui.libraryView.FULL_LIBRARY_WIDTH//ipr
+        block_width = self.ui.libraryView.FULL_LIBRARY_WIDTH // ipr
 
-        scene = QtWidgets.QGraphicsScene(0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH,
-                            2*self.ITEM_SCALE * (len(albums) // ipr + 1)+self.ITEM_SCALE*0.5)
+        scene = QtWidgets.QGraphicsScene(
+            0,
+            0,
+            self.ui.libraryView.FULL_LIBRARY_WIDTH,
+            2 * self.ITEM_SCALE * (len(albums) // ipr + 1) + self.ITEM_SCALE * 0.5,
+        )
 
-        title = QtWidgets.QGraphicsTextItem(f'Albums by {artist}:')
+        title = QtWidgets.QGraphicsTextItem(f"Albums by {artist}:")
         title.setPos(10, 5)
         scene.addItem(title)
 
@@ -341,10 +330,11 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         for i, (date, album, img_data, uri) in enumerate(album_data):
             label = QtWidgets.QGraphicsTextItem()
-            label.setHtml(f'<center>{album}<br />({date})</center>')
-            label.setPos(block_width*(i%ipr),
-                         block_width*(i//ipr)+img_scale+2*self.MARGIN+block_width*0.25)
-            label.setTextWidth(block_width*4/5)
+            label.setHtml(f"<center>{album}<br />({date})</center>")
+            label.setPos(
+                block_width * (i % ipr), block_width * (i // ipr) + img_scale + 2 * self.MARGIN + block_width * 0.25
+            )
+            label.setTextWidth(block_width * 4 / 5)
             label.setData(0, (artist, album, uri))
             scene.addItem(label)
 
@@ -353,23 +343,22 @@ class GUIWindow(QtWidgets.QMainWindow):
 
             pixmap = QtGui.QPixmap()
             pixmap.loadFromData(img_data)
-            pixmap = pixmap.scaled(img_scale, img_scale,
-                                   aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+            pixmap = pixmap.scaled(img_scale, img_scale, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
 
             item = QtWidgets.QGraphicsPixmapItem()
             item.setPixmap(pixmap)
-            item.setPos(block_width * (i % ipr) + img_offset,
-                        block_width * (i // ipr) + self.MARGIN+block_width*0.25)
+            item.setPos(
+                block_width * (i % ipr) + img_offset, block_width * (i // ipr) + self.MARGIN + block_width * 0.25
+            )
             item.setData(0, (artist, album, uri))
 
             scene.addItem(item)
 
-        scene.mouseReleaseEvent=self.select_album
+        scene.mouseReleaseEvent = self.select_album
         self.ui.libraryView.setScene(scene)
         self.ui.libraryView.centerOn(title)
 
-
-    def select_album(self, event:QtWidgets.QGraphicsSceneMouseEvent):
+    def select_album(self, event: QtWidgets.QGraphicsSceneMouseEvent):
         scene: QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
         trans = self.ui.libraryView.transform()
         item = scene.itemAt(event.scenePos(), trans)
@@ -405,7 +394,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.NowPlayingGroup.setText(glabel)
         group = None
         for gi in self.system.groups:
-            if gi.label==glabel:
+            if gi.label == glabel:
                 group = gi
                 break
         if group is None:
@@ -422,7 +411,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.NowPlayingGroup.setText(glabel)
         group = None
         for gi in self.system.groups:
-            if gi.label==glabel:
+            if gi.label == glabel:
                 group = gi
                 break
         if group is None:
@@ -430,34 +419,33 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.set_group_members(group)
         queue = group.coordinator.get_queue()
         player_status = group.coordinator.get_current_transport_info()
-        if player_status['current_transport_state'] == 'PLAYING':
+        if player_status["current_transport_state"] == "PLAYING":
             self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPause))
         else:
             self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
         self.ui.groupQueueList.clear()
-        current_album = ''
+        current_album = ""
         for item in queue:
-            item_data=item.to_dict()
-            artist = item_data.get('creator', '')
-            album = item_data.get('album', '')
-            title = item_data.get('title', '')
+            item_data = item.to_dict()
+            artist = item_data.get("creator", "")
+            album = item_data.get("album", "")
+            title = item_data.get("title", "")
             if album != current_album:
                 current_album = album
-                self.ui.groupQueueList.addItem(f'{artist} | {album}')
-            self.ui.groupQueueList.addItem(f'\t{item.title}')
+                self.ui.groupQueueList.addItem(f"{artist} | {album}")
+            self.ui.groupQueueList.addItem(f"\t{title}")
         self.ui.groupQueueList.setCurrentRow(0)
         cur_vol = group.reference.volume
         self.volume_control.setValue(int(cur_vol))
 
-    def set_group_members(self, group:SonosGroup):
+    def set_group_members(self, group: SonosGroup):
         members = group.reference.members
         mamber_ips = [member.ip_address for member in members]
         for i in range(self.ui.speakerList.count()):
             item = self.ui.speakerList.item(i)
-            item_ip = item.text().split('(')[1].split(')')[0]
-            selected=item_ip in mamber_ips
+            item_ip = item.text().split("(")[1].split(")")[0]
+            selected = item_ip in mamber_ips
             item.setSelected(selected)
-
 
     def update_playing_info(self, index):
         gitem = self.ui.groupList.item(index)
@@ -467,7 +455,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.NowPlayingGroup.setText(glabel)
         group = None
         for gi in self.system.groups:
-            if gi.label==glabel:
+            if gi.label == glabel:
                 group = gi
                 break
         if group is None:
@@ -476,17 +464,17 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         track = group.now_playing()
 
-        if self.ui.groupQueueList.currentItem().text()!=f'\t{track.title}':
+        if self.ui.groupQueueList.currentItem().text() != f"\t{track.title}":
             for i in range(self.ui.groupQueueList.count()):
-                if self.ui.groupQueueList.item(i).text()==f'\t{track.title}':
+                if self.ui.groupQueueList.item(i).text() == f"\t{track.title}":
                     self.ui.groupQueueList.setCurrentRow(i)
                     break
 
         self.ui.NowPlayingTrack.setText(track.title)
         self.ui.NowPlayingAlbum.setText(track.album)
         self.ui.NowPlayingArtist.setText(track.artist)
-        self.ui.NowPlayingTime.setText(f'{track.position}/{track.duration}')
-        if track.album_art=='':
+        self.ui.NowPlayingTime.setText(f"{track.position}/{track.duration}")
+        if track.album_art == "":
             self.ui.NowPlayingArt.clear()
             return
 
@@ -503,24 +491,24 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.NowPlayingArt.setPixmap(pixmap)
 
     def change_icon_size(self, index):
-        if index==0:
-            self.ITEMS_PER_ROW=10
-            self.ALBUMS_PER_ROW=6
-        elif index==1:
-            self.ITEMS_PER_ROW=5
-            self.ALBUMS_PER_ROW=3
-        elif index==2:
-            self.ITEMS_PER_ROW=3
-            self.ALBUMS_PER_ROW=2
-        total_margins = (self.ITEMS_PER_ROW-1)*self.MARGIN
-        self.ITEM_SCALE = (self.ui.libraryView.FULL_LIBRARY_WIDTH-total_margins)//self.ITEMS_PER_ROW
+        if index == 0:
+            self.ITEMS_PER_ROW = 10
+            self.ALBUMS_PER_ROW = 6
+        elif index == 1:
+            self.ITEMS_PER_ROW = 5
+            self.ALBUMS_PER_ROW = 3
+        elif index == 2:
+            self.ITEMS_PER_ROW = 3
+            self.ALBUMS_PER_ROW = 2
+        total_margins = (self.ITEMS_PER_ROW - 1) * self.MARGIN
+        self.ITEM_SCALE = (self.ui.libraryView.FULL_LIBRARY_WIDTH - total_margins) // self.ITEMS_PER_ROW
         self.build_library()
 
     def queue_play_pause(self):
         group = self.current_group()
 
         player_status = group.coordinator.get_current_transport_info()
-        if player_status['current_transport_state'] == 'PLAYING':
+        if player_status["current_transport_state"] == "PLAYING":
             group.coordinator.pause()
             self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
         else:
@@ -541,8 +529,7 @@ class GUIWindow(QtWidgets.QMainWindow):
 
     def change_volume(self, value):
         group = self.current_group()
-        group.reference.volume=value
-
+        group.reference.volume = value
 
     def current_group(self):
         gitem = self.ui.groupList.currentItem()
@@ -561,13 +548,14 @@ class GUIWindow(QtWidgets.QMainWindow):
             self.restoreGeometry(self.settings.value("mainWindow/geometry"))
             self.restoreState(self.settings.value("mainWindow/state"))
 
-    def closeEvent(self, event:QtGui.QCloseEvent):
+    def closeEvent(self, event: QtGui.QCloseEvent):
         self.settings.setValue("mainWindow/geometry", self.saveGeometry())
         self.settings.setValue("mainWindow/state", self.saveState())
         super().closeEvent(event)
 
+
 # Press the green button in the gutter to run the script.
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

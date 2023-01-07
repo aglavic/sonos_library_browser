@@ -1,0 +1,4 @@
+#!C:/Program\ Files/Git/usr/bin/sh.exe
+black -l 120 *.py
+isort -l 120 --lbt 1 *.py
+flake8 --max-line-length=120 --ignore=F401,W503,E203 --count --show-source --statistics --exclude main_interface.py *.py

@@ -95,9 +95,6 @@
      </item>
      <item>
       <widget class="QListWidget" name="speakerList">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="selectionMode">
         <enum>QAbstractItemView::MultiSelection</enum>
        </property>
@@ -129,9 +126,6 @@
      </property>
      <item>
       <widget class="QListWidget" name="groupQueueList">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>1</horstretch>
@@ -345,6 +339,7 @@
     <string>Stop</string>
    </property>
   </action>
+  <zorder>nowPlayingDock</zorder>
  </widget>
  <customwidgets>
   <customwidget>
