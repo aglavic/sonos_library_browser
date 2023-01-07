@@ -237,7 +237,10 @@ class GUIWindow(QtWidgets.QMainWindow):
         artists = self.filtered_artists()
 
         scene = QtWidgets.QGraphicsScene(
-            0, 0, self.ui.libraryView.FULL_LIBRARY_WIDTH, self.ITEM_SCALE * ((len(artists)-1) // self.ITEMS_PER_ROW +1)
+            0,
+            0,
+            self.ui.libraryView.FULL_LIBRARY_WIDTH,
+            self.ITEM_SCALE * ((len(artists) - 1) // self.ITEMS_PER_ROW + 1),
         )
 
         # text labels
@@ -361,7 +364,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             0,
             0,
             self.ui.libraryView.FULL_LIBRARY_WIDTH,
-            block_width * ((len(albums)-1) // ipr + 1) + block_width * 0.5,
+            block_width * ((len(albums) - 1) // ipr + 1) + block_width * 0.5,
         )
 
         title = QtWidgets.QGraphicsTextItem(f"Albums by {artist}:")
@@ -450,12 +453,12 @@ class GUIWindow(QtWidgets.QMainWindow):
             else:
                 self._changed_label[0].setFont(self._changed_label[1])
                 self._changed_label = None
-        font:QtGui.QFont = label.font()
+        font: QtGui.QFont = label.font()
         bfont = QtGui.QFont(font)
-        bfont.setPointSizeF(bfont.pointSizeF()*1.5)
+        bfont.setPointSizeF(bfont.pointSizeF() * 1.5)
         bfont.setBold(True)
         label.setFont(bfont)
-        self._changed_label=(label, font)
+        self._changed_label = (label, font)
 
     def update_playing(self, index):
         gitem = self.ui.groupList.item(index)
