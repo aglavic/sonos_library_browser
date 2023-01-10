@@ -8,7 +8,8 @@ message logLevel.
 import logging
 import sys
 
-from . import BASE_PATH, __version__ as str_version
+from . import BASE_PATH
+from . import __version__ as str_version
 
 # default options used if nothing is set in the configuration
 CONSOLE_LEVEL, FILE_LEVEL, GUI_LEVEL = logging.WARNING, logging.DEBUG, logging.ERROR
@@ -42,7 +43,7 @@ def setup_system():
     logger.addHandler(logfile)
 
     logging.info(f"*** Sonos Library Browser {str_version} Logging started ***")
-    logging.debug(f'BASE_PATH at {BASE_PATH}')
+    logging.debug(f"BASE_PATH at {BASE_PATH}")
     activate_excepthook()
 
 
