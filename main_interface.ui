@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>820</width>
-    <height>518</height>
+    <width>1055</width>
+    <height>744</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,8 +35,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>820</width>
-     <height>22</height>
+     <width>1055</width>
+     <height>21</height>
     </rect>
    </property>
   </widget>
@@ -56,6 +56,12 @@
    <addaction name="actionForward"/>
   </widget>
   <widget class="QDockWidget" name="groupsDock">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>1</verstretch>
+    </sizepolicy>
+   </property>
    <property name="windowTitle">
     <string>Groups</string>
    </property>
@@ -82,16 +88,6 @@
         <enum>QAbstractItemView::SelectItems</enum>
        </property>
       </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Speakers</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QListWidget" name="speakerList"/>
      </item>
     </layout>
    </widget>
@@ -147,7 +143,7 @@
     <string>Settings</string>
    </property>
    <attribute name="dockWidgetArea">
-    <number>2</number>
+    <number>1</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_3">
     <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -312,6 +308,46 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="speakersDock">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>1</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="windowTitle">
+    <string>Speakers</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4">
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <property name="leftMargin">
+      <number>4</number>
+     </property>
+     <property name="topMargin">
+      <number>4</number>
+     </property>
+     <property name="rightMargin">
+      <number>4</number>
+     </property>
+     <property name="bottomMargin">
+      <number>4</number>
+     </property>
+     <item>
+      <widget class="QListWidget" name="speakerList"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="groupToggle">
+       <property name="text">
+        <string>Toggle Group</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="actionBack">
    <property name="text">
     <string>Back</string>
@@ -333,6 +369,7 @@
    </property>
   </action>
   <zorder>nowPlayingDock</zorder>
+  <zorder>speakersDock</zorder>
  </widget>
  <customwidgets>
   <customwidget>
@@ -435,8 +472,8 @@
    <slot>change_icon_size(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>759</x>
-     <y>464</y>
+     <x>263</x>
+     <y>694</y>
     </hint>
     <hint type="destinationlabel">
      <x>674</x>
@@ -451,12 +488,44 @@
    <slot>filter_artists()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>784</x>
-     <y>485</y>
+     <x>263</x>
+     <y>720</y>
     </hint>
     <hint type="destinationlabel">
      <x>687</x>
      <y>491</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupToggle</sender>
+   <signal>pressed()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>toggle_group()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>121</x>
+     <y>629</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>272</x>
+     <y>618</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>speakerList</sender>
+   <signal>currentItemChanged(QListWidgetItem*,QListWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>select_speaker()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>125</x>
+     <y>534</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>270</x>
+     <y>578</y>
     </hint>
    </hints>
   </connection>
@@ -469,5 +538,7 @@
   <slot>queue_stop()</slot>
   <slot>queue_play_pause()</slot>
   <slot>filter_artists()</slot>
+  <slot>toggle_group()</slot>
+  <slot>select_speaker()</slot>
  </slots>
 </ui>

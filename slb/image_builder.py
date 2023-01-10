@@ -9,13 +9,13 @@ import urllib
 
 import eyed3
 
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 
 from . import BASE_PATH
 from . import music_library as mdb
 
 
-class LibraryImageBuilder(QObject):
+class LibraryImageBuilder(QThread):
     def __init__(self, music_library, artists):
         super().__init__()
         self.music_library = music_library
@@ -26,9 +26,9 @@ class LibraryImageBuilder(QObject):
         except Exception:
             self._empty_image = b""
 
-    @pyqtSlot()
-    def build_library_images(self):
+    def run(self):
         threading.current_thread().name = "AlbumArtThread"
+        self.stop_thread = False
 
         mdb.connect_db()
         music_library = self.music_library
@@ -36,6 +36,8 @@ class LibraryImageBuilder(QObject):
 
         # collect icons
         for i, artist in enumerate(artists):
+            if self.stop_thread:
+                return
             last_date = -1
             albums = music_library.get_albums_for_artist(artist.title)
             for album in albums:
@@ -73,3 +75,7 @@ class LibraryImageBuilder(QObject):
             self.download_progress.emit((i + 1) / len(artists))
 
     download_progress = pyqtSignal(float)
+
+    def quit(self):
+        self.stop_thread = True
+        return super().quit()

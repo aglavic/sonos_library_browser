@@ -9,18 +9,23 @@ from time import sleep
 
 import soco
 
-from PyQt5.QtCore import QObject, QTimer, pyqtSlot
+from PyQt5.QtCore import QMutex, QThread, pyqtSlot
 
 from .data_model import SonosSpeaker, SonosSystem
 
 
-class SonosConnector(QObject):
+class SonosConnector(QThread):
     system: SonosSystem = None
 
-    @pyqtSlot()
-    def setup_sonos(self):
+    def run(self):
         threading.current_thread().name = "SonosConnectorThread"
+        self.stop_thread = False
+        self.mutex = QMutex()
 
+        while not self.stop_thread and self.system is None:
+            self.setup_sonos()
+
+    def setup_sonos(self):
         speakers = []
         try:
             for item in soco.discover():
@@ -29,6 +34,13 @@ class SonosConnector(QObject):
                 speakers.append(speaker)
         except Exception:
             log.warning("Could not connect to Sonos, try again in 5 s.", exc_info=True)
-            QTimer.singleShot(5000, self.setup_sonos)
+            self.mutex.lock()
+            self.mutex.tryLock(5000)
+            self.mutex.unlock()
         else:
             self.system = SonosSystem(speakers)
+
+    def quit(self):
+        self.stop_thread = True
+        self.mutex.unlock()
+        return super().quit()

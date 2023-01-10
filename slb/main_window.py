@@ -48,18 +48,15 @@ class GUIWindow(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def connect_sonos(self):
-        self._sonos_connector = SonosConnector()
-        self._thread = QtCore.QThread()
-        self._sonos_connector.moveToThread(self._thread)
-        self._thread.started.connect(self._sonos_connector.setup_sonos)
+        self._thread = SonosConnector()
         self._thread.finished.connect(self.sonos_connected)
         self._thread.start()
 
     @QtCore.pyqtSlot()
     def sonos_connected(self):
-        print("finished")
-        self.system = self._sonos_connector.system
-        del self._sonos_connector
+        self.system = self._thread.system
+        if self.system is None:
+            return
         self._thread.wait()
         del self._thread
 
@@ -95,14 +92,18 @@ class GUIWindow(QtWidgets.QMainWindow):
         slist = [(int(s.ip_address.split(".")[-1]), s) for s in self.system.speakers]
         slist.sort()
         for i, (ip, item) in enumerate(slist):
-            self.ui.speakerList.addItem(f"{item.name} ({item.ip_address})\n\t{item.room}")
+            line = QtWidgets.QListWidgetItem(f"{item.name} ({item.ip_address})\n\t{item.room}")
+            line.setData(QtCore.Qt.UserRole, item)
+            self.ui.speakerList.addItem(line)
 
     def build_group_list(self):
         self.ui.groupList.clear()
-        glist = [g.label for g in self.system.groups]
+        glist = [(g.label, g) for g in self.system.groups]
         glist.sort()
-        for i, label in enumerate(glist):
-            self.ui.groupList.addItem(label)
+        for i, (label, group) in enumerate(glist):
+            line = QtWidgets.QListWidgetItem(label)
+            line.setData(QtCore.Qt.UserRole, group)
+            self.ui.groupList.addItem(line)
         self.ui.groupList.setCurrentRow(0)
 
     def filter_artists(self):
@@ -138,7 +139,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             label.setHtml(f'<div style="background: rgba(255, 255, 255, 200);"><center>{artist.title}</center></div>')
             label.setPos(self.ITEM_SCALE * (i % self.ITEMS_PER_ROW), self.ITEM_SCALE * (i // self.ITEMS_PER_ROW))
             label.setTextWidth(self.ITEM_SCALE - 2 * self.MARGIN)
-            label.setData(0, artist.title)
+            label.setData(QtCore.Qt.UserRole, artist.title)
             label.setZValue(5.0)
             scene.addItem(label)
             self._artist_labels[artist.title] = label
@@ -150,16 +151,13 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         if self._library_artwork is None:
             self.block_library()
-            self.ui.libraryView.verticalScrollBar().setValue(1)
-            self._image_builder = LibraryImageBuilder(music_library, artists)
-            self._image_builder.download_progress.connect(self.update_download)
-            self._library_artwork = self._image_builder.icon_data
             self._last_progress = 0.0
-
-            self._thread = QtCore.QThread()
-            self._image_builder.moveToThread(self._thread)
             self.progress_bar.setStatusTip("Loading Albums")
-            self._thread.started.connect(self._image_builder.build_library_images)
+            self.ui.libraryView.verticalScrollBar().setValue(1)
+
+            self._thread = LibraryImageBuilder(music_library, artists)
+            self._thread.download_progress.connect(self.update_download)
+            self._library_artwork = self._thread.icon_data
             self._thread.start()
         else:
             self.build_artist_icons()
@@ -180,8 +178,6 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         if progress == 1.0:
             self.build_artist_icons(display_range=(self._last_progress, 1.1))
-            del self._image_builder
-            self._thread.quit()
             self._thread.wait()
             del self._thread
             mdb.connect_db()
@@ -225,7 +221,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             item.setPos(
                 self.ITEM_SCALE * (i % self.ITEMS_PER_ROW), self.ITEM_SCALE * (i // self.ITEMS_PER_ROW) + self.MARGIN
             )
-            item.setData(0, artist.title)
+            item.setData(QtCore.Qt.UserRole, artist.title)
 
             scene.addItem(item)
 
@@ -239,7 +235,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         if item is None:
             return
         self._last_album_scoll = self.ui.libraryView.verticalScrollBar().value()
-        self.show_album(item.data(0))
+        self.show_album(item.data(QtCore.Qt.UserRole))
 
     def show_album(self, artist):
         albums = list(self.system.speakers[0].reference.music_library.get_albums_for_artist(artist))
@@ -273,7 +269,7 @@ class GUIWindow(QtWidgets.QMainWindow):
                 block_width * (i % ipr), block_width * (i // ipr) + img_scale + 2 * self.MARGIN + block_width * 0.25
             )
             label.setTextWidth(block_width * 4 / 5)
-            label.setData(0, (artist, album, uri))
+            label.setData(QtCore.Qt.UserRole, (artist, album, uri))
             scene.addItem(label)
 
             if not img_data:
@@ -288,7 +284,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             item.setPos(
                 block_width * (i % ipr) + img_offset, block_width * (i // ipr) + self.MARGIN + block_width * 0.25
             )
-            item.setData(0, (artist, album, uri))
+            item.setData(QtCore.Qt.UserRole, (artist, album, uri))
 
             scene.addItem(item)
 
@@ -305,7 +301,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             self.ui.libraryView.verticalScrollBar().setValue(self._last_album_scoll)
             return
         else:
-            artist, album, uri = item.data(0)
+            artist, album, uri = item.data(QtCore.Qt.UserRole)
             glabel = self.ui.groupList.currentItem().text()
             group = None
             for gi in self.system.groups:
@@ -333,7 +329,7 @@ class GUIWindow(QtWidgets.QMainWindow):
                 self._changed_label[0].setFont(self._changed_label[1])
                 self._changed_label = None
             return
-        label = self._artist_labels.get(item.data(0), None)
+        label = self._artist_labels.get(item.data(QtCore.Qt.UserRole), None)
         if label is None:
             return
         elif self._changed_label:
@@ -498,6 +494,32 @@ class GUIWindow(QtWidgets.QMainWindow):
         self._set_icon_size(index)
         self.build_library()
 
+    @QtCore.pyqtSlot()
+    def select_speaker(self):
+        speaker = self.ui.speakerList.currentItem().data(QtCore.Qt.UserRole).reference
+        group = self.ui.groupList.currentItem().data(QtCore.Qt.UserRole).reference
+        members = [mi for mi in group.members if mi.is_visible]
+        if speaker not in group:
+            self.ui.groupToggle.setText("Add")
+        elif len(members) == 1:
+            self.ui.groupToggle.setText("Sole Member")
+        else:
+            self.ui.groupToggle.setText("Remove")
+
+    @QtCore.pyqtSlot()
+    def toggle_group(self):
+        speaker = self.ui.speakerList.currentItem().data(QtCore.Qt.UserRole).reference
+        group = self.ui.groupList.currentItem().data(QtCore.Qt.UserRole).reference
+        members = [mi for mi in group.members if mi.is_visible]
+        if speaker not in group:
+            speaker.join(group.coordinator)
+        elif len(members) == 1:
+            return
+        else:
+            speaker.unjoin()
+        QtCore.QTimer.singleShot(1000, self.build_group_list)
+
+    @QtCore.pyqtSlot()
     def queue_play_pause(self):
         group = self.current_group()
 
@@ -533,13 +555,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         gitem = self.ui.groupList.currentItem()
         if gitem is None:
             return
-        glabel = gitem.text()
-        group = None
-        for gi in self.system.groups:
-            if gi.label == glabel:
-                group = gi
-                break
-        return group
+        return gitem.data(QtCore.Qt.UserRole)
 
     def load_settings(self):
         self._set_icon_size(self.settings.value("mainWindow/icon_size", 0))
