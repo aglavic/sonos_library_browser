@@ -6,6 +6,7 @@ Download album art and store locally for quick access.
 
 import os
 import sqlite3
+import logging as log
 
 INSERT_QUERY = """INSERT INTO album_art
 (artist, album, album_art, date) VALUES (?,?,?,?);"""
@@ -23,7 +24,7 @@ def connect_db():
     db = sqlite3.connect("music_library.db")
 
     if build_table:
-        print("creating database")
+        log.info("creating database")
         cursor = db.cursor()
         cursor.execute(
             """CREATE TABLE album_art (
