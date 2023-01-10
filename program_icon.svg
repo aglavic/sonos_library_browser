@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="64mm"
+   height="64mm"
+   viewBox="0 0 64 64"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   sodipodi:docname="program_icon.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="2.6727051"
+     inkscape:cx="110.9363"
+     inkscape:cy="107.38184"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid824" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient1866">
+      <stop
+         style="stop-color:#ead3ae;stop-opacity:1"
+         offset="0"
+         id="stop1862" />
+      <stop
+         style="stop-color:#d9ba7b;stop-opacity:1"
+         offset="1"
+         id="stop1864" />
+    </linearGradient>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient1866"
+       id="radialGradient1868"
+       cx="25.558935"
+       cy="38.674026"
+       fx="25.558935"
+       fy="38.674026"
+       r="32.064846"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.99797766,0,0,0.99797766,0.41223834,-0.30917875)" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:url(#radialGradient1868);fill-opacity:1;stroke-width:0.997977;stroke-linecap:round"
+       id="rect1780"
+       width="64"
+       height="64"
+       x="-1.3877788e-17"
+       y="0" />
+    <path
+       style="fill:#800080;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 25.507302,44.095617 c 0,0 -10.685236,-4.146053 -14.147775,-0.929416 -3.1525566,2.928669 -3.041333,9.764752 -0.103268,12.908555 3.155111,3.376049 10.16124,3.625092 13.837968,0.826146 3.024401,-2.302356 2.375174,-11.152989 2.375174,-11.152989 0,0 7.276285,-23.797761 9.087621,-26.746522 5.077155,-8.265344 8.875661,-2.351787 11.566064,0.413073 2.856832,2.935896 0.10327,12.288942 0.10327,12.288942 0,0 5.657368,-9.357135 4.440541,-14.147773 -1.108714,-4.364997 -5.528345,-8.3083583 -9.707231,-9.3974274 -2.513321,-0.6550022 -5.249974,2.0897614 -6.402644,4.4405424 -4.753568,9.694537 -11.04972,31.496869 -11.04972,31.496869 z"
+       id="path859"
+       sodipodi:nodetypes="caaacsacassc" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, Normal';stroke-width:0.264583"
+       x="8.8810844"
+       y="26.436716"
+       id="text4091"
+       inkscape:export-filename="C:\Users\Artur\sonos_gui\slb\icons\program_icon.png"
+       inkscape:export-xdpi="101.6"
+       inkscape:export-ydpi="101.6"><tspan
+         sodipodi:role="line"
+         id="tspan4089"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:25.4px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="8.8810844"
+         y="26.436716">S</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, Normal';stroke-width:0.264583"
+       x="35.214531"
+       y="57.210712"
+       id="text18569"><tspan
+         sodipodi:role="line"
+         id="tspan18567"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:25.4px;font-family:'Curlz MT';-inkscape-font-specification:'Curlz MT, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="35.214531"
+         y="57.210712">LB</tspan></text>
+  </g>
+</svg>

@@ -31,7 +31,7 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         self.ui = main_interface.Ui_MainWindow()
         self.ui.setupUi(self)
-        self.setWindowIcon(QtGui.QIcon(os.path.join(BASE_PATH, 'icons', 'program_icon.png')))
+        self.setWindowIcon(QtGui.QIcon(os.path.join(BASE_PATH, "icons", "program_icon.png")))
         self.ui.actionBack.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaSkipBackward))
         self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
         self.ui.actionStop.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaStop))
