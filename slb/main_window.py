@@ -124,6 +124,7 @@ class GUIWindow(QtWidgets.QMainWindow):
     def build_library(self):
         music_library = self.system.speakers[0].reference.music_library
         artists = self.filtered_artists()
+        self._changed_label = None
 
         scene = QtWidgets.QGraphicsScene(
             0,
