@@ -2,13 +2,14 @@
 The central main window class for the GUI.
 """
 
+import logging as log
 import os
 import urllib
-import logging as log
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from . import main_interface, BASE_PATH, music_library as mdb
+from . import BASE_PATH, main_interface
+from . import music_library as mdb
 from .data_model import SonosGroup, SonosSpeaker, SonosSystem
 from .image_builder import LibraryImageBuilder
 from .sonos_connector import SonosConnector
@@ -54,14 +55,13 @@ class GUIWindow(QtWidgets.QMainWindow):
         self._thread.finished.connect(self.sonos_connected)
         self._thread.start()
 
-
     @QtCore.pyqtSlot()
     def sonos_connected(self):
-        print('finished')
+        print("finished")
         self.system = self._sonos_connector.system
-        del(self._sonos_connector)
+        del self._sonos_connector
         self._thread.wait()
-        del(self._thread)
+        del self._thread
 
         self.build_speaker_list()
         self.build_group_list()
@@ -472,7 +472,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             try:
                 data = urllib.request.urlopen(track.album_art).read()
             except Exception:
-                log.warning(f'Could not get album art for {track.album_art}', exc_info=True)
+                log.warning(f"Could not get album art for {track.album_art}", exc_info=True)
                 data = None
             self.image_cache[track.album_art] = data
         img_data = self.image_cache[track.album_art]
@@ -551,7 +551,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             self.restoreState(self.settings.value("mainWindow/state"))
 
     def closeEvent(self, event: QtGui.QCloseEvent):
-        if getattr(self, '_thread', None):
+        if getattr(self, "_thread", None):
             self._thread.quit()
             self._thread.wait()
         self.settings.setValue("mainWindow/geometry", self.saveGeometry())

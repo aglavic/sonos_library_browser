@@ -2,15 +2,17 @@
 Worker class to download album art images.
 """
 
-import os
-import urllib
-import threading
 import logging as log
+import os
+import threading
+import urllib
+
 import eyed3
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
-from . import BASE_PATH, music_library as mdb
+from . import BASE_PATH
+from . import music_library as mdb
 
 
 class LibraryImageBuilder(QObject):
@@ -62,8 +64,7 @@ class LibraryImageBuilder(QObject):
                         try:
                             img_data = urllib.request.urlopen(uri).read()
                         except Exception:
-                            log.warning(f"Could not fetch artwork for {artist.title} | {album.title}",
-                                        exc_info=True)
+                            log.warning(f"Could not fetch artwork for {artist.title} | {album.title}", exc_info=True)
                             img_data = self._empty_image
                     mdb.insert_image(artist.title, album.title, img_data, date)
                 if date > last_date:

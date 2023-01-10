@@ -4,9 +4,9 @@ Build a copy of Artist/Album of the Sonos music library.
 Download album art and store locally for quick access.
 """
 
+import logging as log
 import os
 import sqlite3
-import logging as log
 
 INSERT_QUERY = """INSERT INTO album_art
 (artist, album, album_art, date) VALUES (?,?,?,?);"""

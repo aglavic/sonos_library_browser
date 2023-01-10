@@ -6,11 +6,13 @@ try:
     import slb
 except ImportError:
     import os
+
     package_dir = os.path.abspath(os.path.dirname(__file__))
     sys.path.insert(0, package_dir)
 
-from slb.main_window import GUIWindow
 from slb.custom_logging import setup_system
+from slb.main_window import GUIWindow
+
 
 def main():
     setup_system()
