@@ -8,7 +8,7 @@ message logLevel.
 import logging
 import sys
 
-from . import __version__ as str_version
+from . import BASE_PATH, __version__ as str_version
 
 # default options used if nothing is set in the configuration
 CONSOLE_LEVEL, FILE_LEVEL, GUI_LEVEL = logging.WARNING, logging.DEBUG, logging.ERROR
@@ -35,13 +35,14 @@ def setup_system():
     logfile = logging.FileHandler("sonos_gui.log", "w", encoding="utf-8")
     logger.setLevel(min(logger.getEffectiveLevel(), FILE_LEVEL))
     formatter = logging.Formatter(
-        "%(levelname)-7s: %(asctime)s - " "%(threadName)s:%(filename)s:%(lineno)i:%(funcName)s " "| %(message)s", ""
+        "%(levelname)s: %(asctime)s - " "%(threadName)s:%(filename)s:%(lineno)i:%(funcName)s " "| %(message)s", ""
     )
     logfile.setFormatter(formatter)
     logfile.setLevel(FILE_LEVEL)
     logger.addHandler(logfile)
 
     logging.info(f"*** Sonos Library Browser {str_version} Logging started ***")
+    logging.debug(f'BASE_PATH at {BASE_PATH}')
     activate_excepthook()
 
 
