@@ -45,10 +45,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.dockWidgetContents)
         self.verticalLayout_6.setContentsMargins(4, 4, 4, 4)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
-        self.groupList = QtWidgets.QListWidget(self.dockWidgetContents)
-        self.groupList.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
-        self.groupList.setObjectName("groupList")
-        self.verticalLayout_6.addWidget(self.groupList)
         self.sonosGroupView = SonosGroupWidget(self.dockWidgetContents)
         self.sonosGroupView.setObjectName("sonosGroupView")
         self.verticalLayout_6.addWidget(self.sonosGroupView)
@@ -154,26 +150,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addWidget(self.NowPlayingTime)
         self.nowPlayingDock.setWidget(self.dockWidgetContents_5)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.nowPlayingDock)
-        self.speakersDock = QtWidgets.QDockWidget(MainWindow)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(1)
-        sizePolicy.setHeightForWidth(self.speakersDock.sizePolicy().hasHeightForWidth())
-        self.speakersDock.setSizePolicy(sizePolicy)
-        self.speakersDock.setObjectName("speakersDock")
-        self.dockWidgetContents_4 = QtWidgets.QWidget()
-        self.dockWidgetContents_4.setObjectName("dockWidgetContents_4")
-        self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.dockWidgetContents_4)
-        self.verticalLayout_5.setContentsMargins(4, 4, 4, 4)
-        self.verticalLayout_5.setObjectName("verticalLayout_5")
-        self.speakerList = QtWidgets.QListWidget(self.dockWidgetContents_4)
-        self.speakerList.setObjectName("speakerList")
-        self.verticalLayout_5.addWidget(self.speakerList)
-        self.groupToggle = QtWidgets.QPushButton(self.dockWidgetContents_4)
-        self.groupToggle.setObjectName("groupToggle")
-        self.verticalLayout_5.addWidget(self.groupToggle)
-        self.speakersDock.setWidget(self.dockWidgetContents_4)
-        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.speakersDock)
         self.actionBack = QtWidgets.QAction(MainWindow)
         self.actionBack.setObjectName("actionBack")
         self.actionPlay_Pause = QtWidgets.QAction(MainWindow)
@@ -183,22 +159,18 @@ class Ui_MainWindow(object):
         self.actionStop = QtWidgets.QAction(MainWindow)
         self.actionStop.setObjectName("actionStop")
         self.nowPlayingDock.raise_()
-        self.speakersDock.raise_()
         self.toolBar.addAction(self.actionBack)
         self.toolBar.addAction(self.actionPlay_Pause)
         self.toolBar.addAction(self.actionStop)
         self.toolBar.addAction(self.actionForward)
 
         self.retranslateUi(MainWindow)
-        self.groupList.currentRowChanged["int"].connect(MainWindow.update_playing)  # type: ignore
         self.actionBack.triggered.connect(MainWindow.queue_prev)  # type: ignore
         self.actionPlay_Pause.triggered.connect(MainWindow.queue_play_pause)  # type: ignore
         self.actionStop.triggered.connect(MainWindow.queue_stop)  # type: ignore
         self.actionForward.triggered.connect(MainWindow.queue_next)  # type: ignore
         self.iconSizeBox.currentIndexChanged["int"].connect(MainWindow.change_icon_size)  # type: ignore
         self.artistFilter.textEdited["QString"].connect(MainWindow.filter_artists)  # type: ignore
-        self.groupToggle.pressed.connect(MainWindow.toggle_group)  # type: ignore
-        self.speakerList.currentItemChanged["QListWidgetItem*", "QListWidgetItem*"].connect(MainWindow.select_speaker)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -224,8 +196,6 @@ class Ui_MainWindow(object):
         self.NowPlayingTrack.setText(_translate("MainWindow", "{?}"))
         self.NowPlayingTime.setToolTip(_translate("MainWindow", "Time"))
         self.NowPlayingTime.setText(_translate("MainWindow", "{?}"))
-        self.speakersDock.setWindowTitle(_translate("MainWindow", "Speakers"))
-        self.groupToggle.setText(_translate("MainWindow", "Toggle Group"))
         self.actionBack.setText(_translate("MainWindow", "Back"))
         self.actionPlay_Pause.setText(_translate("MainWindow", "Play/Pause"))
         self.actionForward.setText(_translate("MainWindow", "Forward"))

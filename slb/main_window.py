@@ -65,10 +65,10 @@ class GUIWindow(QtWidgets.QMainWindow):
         self._thread.wait()
         del self._thread
 
-        self.build_speaker_list()
-        self.build_group_list()
-        self.build_library()
+        self.ui.sonosGroupView.set_groups(self.system.groups)
         self.set_playing_group()
+        self.ui.sonosGroupView.group_clicked.connect(self.change_active_group)
+        self.build_library()
 
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.on_timer)
@@ -97,7 +97,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.toolBar.addWidget(self.volume_control)
 
     def on_timer(self):
-        self.update_playing_info(self.ui.groupList.currentRow())
+        self.update_playing_info()
 
     def build_speaker_list(self):
         self.ui.speakerList.clear()
@@ -315,23 +315,17 @@ class GUIWindow(QtWidgets.QMainWindow):
             return
         else:
             artist, album, uri = item.data(QtCore.Qt.UserRole)
-            glabel = self.ui.groupList.currentItem().text()
-            group = None
-            for gi in self.system.groups:
-                if gi.label == glabel:
-                    group = gi
-                    break
-            if group is None:
-                return
-            else:
-                if event.button() == QtCore.Qt.LeftButton:
-                    group.coordinator.add_uri_to_queue(uri)
-                elif event.button() == QtCore.Qt.RightButton:
-                    group.coordinator.clear_queue()
-                    group.coordinator.add_uri_to_queue(uri)
-                    group.coordinator.play()
-                self.update_queue(self.ui.groupList.currentRow())
-                self.update_playing_info(self.ui.groupList.currentRow())
+            group = self.current_group()
+            if event.button() == QtCore.Qt.LeftButton:
+                group.coordinator.add_uri_to_queue(uri)
+                self.status_bar.showMessage(f"Appending {artist} | {album}", 1000)
+            elif event.button() == QtCore.Qt.RightButton:
+                group.coordinator.clear_queue()
+                group.coordinator.add_uri_to_queue(uri)
+                group.coordinator.play()
+                self.status_bar.showMessage(f"Playing {artist} | {album}", 1000)
+            self.update_queue()
+            self.update_playing_info()
 
     def hover_album(self, event: QtWidgets.QGraphicsSceneMouseEvent):
         scene: QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
@@ -358,45 +352,19 @@ class GUIWindow(QtWidgets.QMainWindow):
         label.setFont(bfont)
         self._changed_label = (label, font)
 
-    @QtCore.pyqtSlot(int)
-    def update_playing(self, index):
-        gitem = self.ui.groupList.item(index)
-        if gitem is None:
-            return
-        glabel = gitem.text()
-        self.ui.NowPlayingGroup.setText(glabel)
-        group = None
-        for gi in self.system.groups:
-            if gi.label == glabel:
-                group = gi
-                break
-        if group is None:
-            self.build_group_list()
-            return
-        self.update_queue(index)
-        self.update_playing_info(index)
+    def update_queue(self):
+        self._last_selected_track = None
+        group = self.current_group()
+        self.ui.NowPlayingGroup.setText(group.label)
 
-    def update_queue(self, index):
-        gitem = self.ui.groupList.item(index)
-        if gitem is None:
-            return
-        glabel = gitem.text()
-        self.ui.NowPlayingGroup.setText(glabel)
-        group = None
-        for gi in self.system.groups:
-            if gi.label == glabel:
-                group = gi
-                break
-        if group is None:
-            return
-        self.set_group_members(group)
+        self.ui.groupQueueList.clear()
         queue = group.coordinator.get_queue()
         player_status = group.coordinator.get_current_transport_info()
         if player_status["current_transport_state"] == "PLAYING":
             self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPause))
         else:
             self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
-        self.ui.groupQueueList.clear()
+
         current_album = ""
         for item in queue:
             item_data = item.to_dict()
@@ -410,50 +378,22 @@ class GUIWindow(QtWidgets.QMainWindow):
         cur_vol = group.reference.volume
         self.volume_control.setValue(int(cur_vol))
 
-    def set_group_members(self, group: SonosGroup):
-        members = group.reference.members
-        member_ips = [member.ip_address for member in members]
-        member_brush = QtGui.QBrush(QtGui.QColor(100, 200, 100))
-        other_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        for i in range(self.ui.speakerList.count()):
-            item: QtWidgets.QListWidgetItem = self.ui.speakerList.item(i)
-            item_ip = item.text().split("(")[1].split(")")[0]
-            if item_ip in member_ips:
-                item.setBackground(member_brush)
-            else:
-                item.setBackground(other_brush)
-
     @QtCore.pyqtSlot()
     def set_playing_group(self):
-        # select the first group the is actually playing at th emoment
-        for i in range(self.ui.groupList.count()):
-            gname = self.ui.groupList.item(i).text()
-            group = None
-            for gi in self.system.groups:
-                if gi.label == gname:
-                    group = gi
-                    break
-            if group is None:
-                continue
+        # select the first group that is actually playing at th emoment
+        for group in self.system.groups:
             player_status = group.coordinator.get_current_transport_info()
             if player_status["current_transport_state"] == "PLAYING":
-                self.ui.groupList.setCurrentRow(i)
+                self.ui.sonosGroupView.activate_group(group)
                 return
 
-    def update_playing_info(self, index):
-        gitem = self.ui.groupList.item(index)
-        if gitem is None:
-            return
-        glabel = gitem.text()
-        self.ui.NowPlayingGroup.setText(glabel)
-        group = None
-        for gi in self.system.groups:
-            if gi.label == glabel:
-                group = gi
-                break
-        if group is None:
-            self.build_group_list()
-            return
+    def change_active_group(self, group: SonosGroup):
+        self.update_queue()
+        self.update_playing_info()
+
+    def update_playing_info(self):
+        group = self.current_group()
+        self.ui.NowPlayingGroup.setText(group.label)
 
         track = group.now_playing()
 
@@ -521,14 +461,16 @@ class GUIWindow(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def toggle_group(self):
-        speaker = self.ui.speakerList.currentItem().data(QtCore.Qt.UserRole).reference
-        group = self.ui.groupList.currentItem().data(QtCore.Qt.UserRole).reference
-        members = [mi for mi in group.members if mi.is_visible]
-        if speaker not in group:
+        speaker: SonosSpeaker = self.ui.speakerList.currentItem().data(QtCore.Qt.UserRole)
+        group: SonosGroup = self.ui.groupList.currentItem().data(QtCore.Qt.UserRole)
+        members = [mi for mi in group.reference.members if mi.is_visible]
+        if speaker.reference not in group.reference:
+            self.status_bar.showMessage(f"Joining {speaker.name} with {group.label}", 1000)
             speaker.join(group.coordinator)
         elif len(members) == 1:
             return
         else:
+            self.status_bar.showMessage(f"Removing {speaker.name} from {group.label}", 1000)
             speaker.unjoin()
         QtCore.QTimer.singleShot(1000, self.build_group_list)
 
@@ -540,24 +482,29 @@ class GUIWindow(QtWidgets.QMainWindow):
         if player_status["current_transport_state"] == "PLAYING":
             group.coordinator.pause()
             self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
+            self.status_bar.showMessage(f"Pausing on {group.label}", 1000)
         else:
             group.coordinator.play()
             self.ui.actionPlay_Pause.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPause))
+            self.status_bar.showMessage(f"Playing on {group.label}", 1000)
 
     @QtCore.pyqtSlot()
     def queue_stop(self):
-        group = self.current_group()
+        group: SonosGroup = self.current_group()
         group.coordinator.stop()
+        self.status_bar.showMessage(f"Stop playing on {group.label}", 1000)
 
     @QtCore.pyqtSlot()
     def queue_prev(self):
         group = self.current_group()
         group.coordinator.previous()
+        self.status_bar.showMessage(f"Playing previeous song on {group.label}", 1000)
 
     @QtCore.pyqtSlot()
     def queue_next(self):
         group = self.current_group()
         group.coordinator.next()
+        self.status_bar.showMessage(f"Playing next song on {group.label}", 1000)
 
     @QtCore.pyqtSlot(int)
     def change_volume(self, value):
@@ -565,10 +512,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         group.reference.volume = value
 
     def current_group(self):
-        gitem = self.ui.groupList.currentItem()
-        if gitem is None:
-            return
-        return gitem.data(QtCore.Qt.UserRole)
+        return self.ui.sonosGroupView.current_group
 
     def load_settings(self):
         self._set_icon_size(self.settings.value("mainWindow/icon_size", 0))
