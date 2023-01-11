@@ -117,20 +117,33 @@ class SonosGroupWidget(QtWidgets.QGraphicsView):
 
 
 class SonosSpeakerGraphics(QtWidgets.QGraphicsPixmapItem):
-    def __init__(self, pixmap, speaker: SonosSpeaker):
+    def __init__(self, speaker: SonosSpeaker):
         super().__init__()
-        self.setPixmap(pixmap.scaled(80, 50, aspectRatioMode=QtCore.Qt.KeepAspectRatio))
+
+        pixmap = QtGui.QPixmap()
+        icon_file = os.path.join(BASE_PATH, "icons", f'{speaker.name.lower().replace(" ", "_")}.png')
+        if os.path.exists(icon_file):
+            pixmap.load(icon_file)
+
+        else:
+            pixmap.load(os.path.join(BASE_PATH, "icons", "no_artwork.png"))
+
+        self.setPixmap(pixmap.scaled(160, 160, aspectRatioMode=QtCore.Qt.KeepAspectRatio))
+        w = self.pixmap().width()
+        h = self.pixmap().height()
         self.speaker = speaker
 
         self.title = QtWidgets.QGraphicsTextItem()
-        self.title.setHtml(f'<div style="background:rgba(255, 255, 255, 75%)">{speaker.name}</div>')
+        self.title.setHtml(f'<div style="background:rgba(255, 255, 255, 50%)">{speaker.room}</div>')
+        self.setToolTip(f"{speaker.name} ({speaker.ip_address})")
+        self.title.setToolTip(f"{speaker.name} ({speaker.ip_address})")
         font: QtGui.QFont = self.title.font()
-        font.setPointSizeF(18.0)
+        font.setPointSizeF(20.0)
         self.title.setFont(font)
         self.title.setDefaultTextColor(QtGui.QColor(0, 0, 0))
         tc = self.title.boundingRect().width() / 2.0
         self.title.setParentItem(self)
-        self.title.setPos(-tc, 50)
+        self.title.setPos(w / 2 - tc, h - 15)
 
     def mousePressEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent):
         self.setCursor(QtCore.Qt.ClosedHandCursor)
@@ -150,7 +163,7 @@ class SonosSpeakerGraphics(QtWidgets.QGraphicsPixmapItem):
         mime.setData("text/sonos_ip", QtCore.QByteArray(self.speaker.ip_address.encode("utf-8")))
         drag.setMimeData(mime)
 
-        drag.setPixmap(self.pixmap().scaled(40, 30))
+        drag.setPixmap(self.pixmap())
         drag.setHotSpot(QtCore.QPoint(20, 15))
 
         drag.exec()
@@ -194,9 +207,6 @@ class SonosGroupGraphics(QtWidgets.QGraphicsEllipseItem):
             SonosGroupWidget.FULL_WIDGET_SCALE * 0.5 - tc, SonosGroupWidget.FULL_WIDGET_SCALE * 0.35 - 15.0
         )
 
-        pixmap = QtGui.QPixmap()
-        pixmap.load(os.path.join(BASE_PATH, "icons", "no_artwork.png"))
-
         if speaker_list is None:
             speaker_list = []
             for item in group.reference.members:
@@ -207,7 +217,7 @@ class SonosGroupGraphics(QtWidgets.QGraphicsEllipseItem):
 
         self.speakers = []
         for speaker in speaker_list:
-            spkr_graph = SonosSpeakerGraphics(pixmap, speaker)
+            spkr_graph = SonosSpeakerGraphics(speaker)
             self.speakers.append(spkr_graph)
         self.position_speakers()
 
