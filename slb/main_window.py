@@ -68,11 +68,37 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.ui.sonosGroupView.set_groups(self.system.groups)
         self.set_playing_group()
         self.ui.sonosGroupView.group_clicked.connect(self.change_active_group)
+        self.ui.sonosGroupView.speaker_joined.connect(self.speaker_joined)
+        self.ui.sonosGroupView.speaker_unjoined.connect(self.speaker_unjoined)
         self.build_library()
 
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.on_timer)
         self._timer.start(1000)
+
+    def speaker_joined(self, speaker_ip: str, group: SonosGroup):
+        speaker = None
+        for spkr in self.system.speakers:
+            if speaker_ip == spkr.ip_address:
+                speaker = spkr
+                break
+        self.status_bar.showMessage(f"Joining {speaker.name} to group {group.label}", 5000)
+        speaker.reference.join(group.coordinator)
+        QtCore.QTimer.singleShot(5000, self.update_groups)
+
+    def speaker_unjoined(self, speaker_ip: str):
+        speaker = None
+        for spkr in self.system.speakers:
+            if speaker_ip == spkr.ip_address:
+                speaker = spkr
+                break
+        self.status_bar.showMessage(f"Unjoining {speaker.name}", 5000)
+        speaker.reference.unjoin()
+        QtCore.QTimer.singleShot(5000, self.update_groups)
+
+    def update_groups(self):
+        self.ui.sonosGroupView.set_groups(self.system.groups)
+        self.set_playing_group()
 
     def extend_toolbar(self):
         self.status_bar = QtWidgets.QStatusBar()

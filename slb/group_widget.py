@@ -20,8 +20,13 @@ class SonosGroupWidget(QtWidgets.QGraphicsView):
     group_items: list[QtWidgets.QGraphicsItem]
     current_group: SonosGroup = None
 
+    group_clicked = QtCore.pyqtSignal(SonosGroup)
+    speaker_joined = QtCore.pyqtSignal(str, SonosGroup)
+    speaker_unjoined = QtCore.pyqtSignal(str)
+
     def __init__(self, parent):
         super().__init__(parent)
+        self.setAcceptDrops(True)
 
         self.group_items = []
         self.setRenderHint(QtGui.QPainter.Antialiasing)
@@ -35,7 +40,30 @@ class SonosGroupWidget(QtWidgets.QGraphicsView):
             self.group_items.append(gg)
         self.draw_items()
 
-    group_clicked = QtCore.pyqtSignal(SonosGroup)
+    def dragMoveEvent(self, event: QtGui.QDropEvent):
+        event.setAccepted(True)
+
+    def dragEnterEvent(self, event: QtWidgets.QGraphicsSceneDragDropEvent):
+        mime: QtCore.QMimeData = event.mimeData()
+        if mime.hasFormat("text/sonos_ip"):
+            event.setAccepted(True)
+        else:
+            event.setAccepted(False)
+
+    def dropEvent(self, event: QtGui.QDropEvent):
+        child: SonosGroupGraphics = self.itemAt(event.pos())
+        speaker_ip = bytes(event.mimeData().data("text/sonos_ip")).decode("utf-8")
+        if child is None:
+            self.speaker_unjoined.emit(speaker_ip)
+        else:
+            while not isinstance(child, SonosGroupGraphics):
+                child = child.parentItem()
+            sids = [s.speaker.ip_address for s in child.speakers]
+            if speaker_ip in sids:
+                event.setAccepted(False)
+                return
+            self.speaker_joined.emit(speaker_ip, child.group)
+        event.setAccepted(True)
 
     def activate_group(self, group: SonosGroup):
         for gg in self.group_items:
@@ -75,6 +103,7 @@ class SonosGroupWidget(QtWidgets.QGraphicsView):
         scene = QtWidgets.QGraphicsScene(0, 0, w, h)
         for group in self.group_items:
             scene.addItem(group)
+            scene.dragEnterEvent = group.dragEnterEvent
         self.setScene(scene)
         self.position_items()
 
@@ -148,7 +177,6 @@ class SonosGroupGraphics(QtWidgets.QGraphicsEllipseItem):
             SonosGroupWidget.FULL_WIDGET_SCALE * 0.7,
             SonosGroupWidget.FULL_WIDGET_SCALE * 0.5,
         )
-        self.setAcceptDrops(True)
         self.group = group
         self.parent = parent
 
@@ -191,16 +219,6 @@ class SonosGroupGraphics(QtWidgets.QGraphicsEllipseItem):
 
     def deactivate_group(self):
         self.setBrush(UNSET_GRADIENT)
-
-    def dragEnterEvent(self, event: QtWidgets.QGraphicsSceneDragDropEvent):
-        mime: QtCore.QMimeData = event.mimeData()
-        if mime.hasFormat("text/sonos_ip"):
-            event.setAccepted(True)
-        else:
-            event.setAccepted(False)
-
-    def dropEvent(self, event: QtWidgets.QGraphicsSceneDragDropEvent):
-        print(bytes(event.mimeData().data("text/sonos_ip")).decode("utf-8"), self.title.toPlainText())
 
     def position_speakers(self):
         lsp = len(self.speakers)
