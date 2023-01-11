@@ -9,7 +9,7 @@ from time import sleep
 
 import soco
 
-from PyQt5.QtCore import QMutex, QThread, pyqtSlot
+from PyQt5.QtCore import QMutex, QThread
 
 from .data_model import SonosSpeaker, SonosSystem
 

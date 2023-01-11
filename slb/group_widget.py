@@ -39,6 +39,7 @@ class SonosGroupWidget(QtWidgets.QGraphicsView):
             gg = SonosGroupGraphics(self, group)
             self.group_items.append(gg)
         self.draw_items()
+        self.resizeEvent(None)
 
     def dragMoveEvent(self, event: QtGui.QDropEvent):
         event.setAccepted(True)
@@ -75,9 +76,8 @@ class SonosGroupWidget(QtWidgets.QGraphicsView):
         self.group_clicked.emit(group)
 
     def resizeEvent(self, QResizeEvent):
-        #
-        w = self.width() - self.verticalScrollBar().width()
-        h = self.height() - self.horizontalScrollBar().height()
+        w = self.width()
+        h = self.height()
 
         if w > (1.5 * h):
             s = h / self.FULL_WIDGET_SCALE

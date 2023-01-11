@@ -13,6 +13,7 @@ from . import music_library as mdb
 from .custom_logging import QtLogger
 from .data_model import SonosGroup, SonosSpeaker, SonosSystem
 from .image_builder import LibraryImageBuilder
+from .soco_event_thread import SocoEventThread
 from .sonos_connector import SonosConnector
 
 
@@ -65,6 +66,10 @@ class GUIWindow(QtWidgets.QMainWindow):
         self._thread.wait()
         del self._thread
 
+        self._soco_events = SocoEventThread(self.system.reference)
+        self._soco_events.zone_topology_event.connect(self.update_groups)
+        self._soco_events.start()
+
         self.ui.sonosGroupView.set_groups(self.system.groups)
         self.set_playing_group()
         self.ui.sonosGroupView.group_clicked.connect(self.change_active_group)
@@ -94,7 +99,6 @@ class GUIWindow(QtWidgets.QMainWindow):
                 break
         self.status_bar.showMessage(f"Unjoining {speaker.name}", 5000)
         speaker.reference.unjoin()
-        QtCore.QTimer.singleShot(5000, self.update_groups)
 
     def update_groups(self):
         self.ui.sonosGroupView.set_groups(self.system.groups)
@@ -550,9 +554,11 @@ class GUIWindow(QtWidgets.QMainWindow):
             self.restoreState(self.settings.value("mainWindow/state"))
 
     def closeEvent(self, event: QtGui.QCloseEvent):
+        self._soco_events.quit()
         if getattr(self, "_thread", None):
             self._thread.quit()
             self._thread.wait()
+        self._soco_events.wait()
         self.settings.setValue("mainWindow/geometry", self.saveGeometry())
         self.settings.setValue("mainWindow/state", self.saveState())
         self.settings.setValue("mainWindow/icon_size", self.ui.iconSizeBox.currentIndex())
