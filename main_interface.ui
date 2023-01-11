@@ -89,6 +89,9 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="SonosGroupWidget" name="sonosGroupView"/>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -375,12 +378,17 @@
   <customwidget>
    <class>AlbumArtworkLabel</class>
    <extends>QLabel</extends>
-   <header location="global">simple_widgets.h</header>
+   <header location="global">.simple_widgets.h</header>
   </customwidget>
   <customwidget>
    <class>LibraryView</class>
    <extends>QGraphicsView</extends>
-   <header location="global">simple_widgets.h</header>
+   <header location="global">.simple_widgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>SonosGroupWidget</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">.group_widget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

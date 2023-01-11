@@ -49,6 +49,9 @@ class Ui_MainWindow(object):
         self.groupList.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
         self.groupList.setObjectName("groupList")
         self.verticalLayout_6.addWidget(self.groupList)
+        self.sonosGroupView = SonosGroupWidget(self.dockWidgetContents)
+        self.sonosGroupView.setObjectName("sonosGroupView")
+        self.verticalLayout_6.addWidget(self.sonosGroupView)
         self.groupsDock.setWidget(self.dockWidgetContents)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.groupsDock)
         self.queueDock = QtWidgets.QDockWidget(MainWindow)
@@ -195,7 +198,7 @@ class Ui_MainWindow(object):
         self.iconSizeBox.currentIndexChanged["int"].connect(MainWindow.change_icon_size)  # type: ignore
         self.artistFilter.textEdited["QString"].connect(MainWindow.filter_artists)  # type: ignore
         self.groupToggle.pressed.connect(MainWindow.toggle_group)  # type: ignore
-        self.speakerList.currentRowChanged["int"].connect(MainWindow.select_speaker)  # type: ignore
+        self.speakerList.currentItemChanged["QListWidgetItem*", "QListWidgetItem*"].connect(MainWindow.select_speaker)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -229,4 +232,5 @@ class Ui_MainWindow(object):
         self.actionStop.setText(_translate("MainWindow", "Stop"))
 
 
-from simple_widgets import AlbumArtworkLabel, LibraryView
+from .group_widget import SonosGroupWidget
+from .simple_widgets import AlbumArtworkLabel, LibraryView
