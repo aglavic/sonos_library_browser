@@ -1,7 +1,7 @@
 """
 The central main window class for the GUI.
 """
-
+import logging
 import logging as log
 import os
 import urllib
@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from . import BASE_PATH, main_interface
 from . import music_library as mdb
+from .custom_logging import QtLogger
 from .data_model import SonosGroup, SonosSpeaker, SonosSystem
 from .image_builder import LibraryImageBuilder
 from .sonos_connector import SonosConnector
@@ -45,6 +46,9 @@ class GUIWindow(QtWidgets.QMainWindow):
 
         self.extend_toolbar()
 
+        self._loghandler = QtLogger(self, self.status_bar)
+        logging.getLogger().addHandler(self._loghandler)
+
         QtCore.QTimer.singleShot(1, self.connect_sonos)
 
     @QtCore.pyqtSlot()
@@ -71,9 +75,16 @@ class GUIWindow(QtWidgets.QMainWindow):
         self._timer.start(1000)
 
     def extend_toolbar(self):
+        self.status_bar = QtWidgets.QStatusBar()
+        self.status_bar.setSizeGripEnabled(False)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(5)
+        self.status_bar.setSizePolicy(sizePolicy)
+        self.ui.toolBar.addWidget(self.status_bar)
+
         self.progress_bar = QtWidgets.QProgressBar()
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(3)
+        sizePolicy.setHorizontalStretch(2)
         self.progress_bar.setSizePolicy(sizePolicy)
         self.ui.toolBar.addWidget(self.progress_bar)
         self.ui.toolBar.addWidget(QtWidgets.QLabel("  Volume:"))

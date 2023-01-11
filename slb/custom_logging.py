@@ -8,6 +8,8 @@ message logLevel.
 import logging
 import sys
 
+from PyQt5 import QtWidgets
+
 from . import BASE_PATH
 from . import __version__ as str_version
 
@@ -20,6 +22,27 @@ if "pdb" in list(sys.modules.keys()) or "pydevd" in list(sys.modules.keys()):
     CONSOLE_LEVEL, FILE_LEVEL, GUI_LEVEL = logging.INFO, logging.DEBUG, logging.ERROR
 elif "--debug" in sys.argv:
     CONSOLE_LEVEL, FILE_LEVEL, GUI_LEVEL = logging.DEBUG, logging.DEBUG, logging.ERROR
+
+
+class QtLogger(logging.Handler):
+    """
+    Display log messages to the GUI. Information is just displayed in the status bar
+    while error and critical events are shown as separate window.
+    """
+
+    def __init__(self, parent: QtWidgets.QMainWindow, status_bar: QtWidgets.QStatusBar):
+        super().__init__(min(CONSOLE_LEVEL, GUI_LEVEL))
+        self.parent = parent
+        self.status_bar = status_bar
+
+    def emit(self, record: logging.LogRecord):
+        if record.levelno >= GUI_LEVEL:
+            msgbox = QtWidgets.QMessageBox(self.parent)
+            msgbox.setText(self.format(record))
+            msgbox.setWindowTitle(f"{record.levelname} Message")
+            msgbox.exec()
+        else:
+            self.status_bar.showMessage(f"{record.levelname}\t{record.message}", 2500)
 
 
 def setup_system():
