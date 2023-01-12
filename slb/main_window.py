@@ -141,6 +141,9 @@ class GUIWindow(QtWidgets.QMainWindow):
             ]
         else:
             artists = [a for a in music_library.get_album_artists(max_items=1000) if artist_filter in a.title.lower()]
+        if self.ui.genreFilter.currentText() != "All Genres":
+            filtered_artists = mdb.get_artists(self.ui.genreFilter.currentText())
+            artists = [a for a in artists if a.title in filtered_artists]
         artists.sort(key=lambda a: a.title)
         return artists
 
@@ -206,6 +209,8 @@ class GUIWindow(QtWidgets.QMainWindow):
             del self._thread
             mdb.connect_db()
             self.unblock_library()
+            for genre in sorted(mdb.get_genre_list()):
+                self.ui.genreFilter.addItem(genre)
             self.progress_bar.setValue(0)
         elif progress > (self._last_progress + 0.1):
             self.build_artist_icons(display_range=(self._last_progress, progress))

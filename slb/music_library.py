@@ -9,13 +9,18 @@ import os
 import sqlite3
 
 INSERT_QUERY = """INSERT INTO album_art
-(artist, album, album_art, date) VALUES (?,?,?,?);"""
+(artist, album, album_art, date, genre) VALUES (?,?,?,?,?);"""
 
 SEARCH_QUERY = """SELECT album_art,date FROM album_art
 WHERE artist = ? AND album = ?;"""
 
 SEARCH_QUERY_2 = """SELECT album_art,date FROM album_art
 WHERE artist = ? ORDER BY date DESC;"""
+
+GENRE_QUREY = """SELECT DISTINCT genre FROM album_art;"""
+
+ARTIST_QUREY = """SELECT DISTINCT artist FROM album_art ORDER BY artist ASC;"""
+ARTIST_GENRE_QUREY = """SELECT DISTINCT artist, genre FROM album_art WHERE genre = ? ORDER BY artist ASC;"""
 
 
 def connect_db():
@@ -32,19 +37,20 @@ def connect_db():
                             artist TEXT NOT NULL,
                             album TEXT NOT NULL,
                             album_art BLOB,
-                            date INTEGER);"""
+                            date INTEGER,
+                            genre TEXT);"""
         )
         cursor.close()
         db.commit()
 
 
-def insert_image(artist, album, image, date):
+def insert_image(artist, album, image, date, genre=None):
     cursor = db.cursor()
     try:
         date = int(date)
     except ValueError:
         date = -1
-    cursor.execute(INSERT_QUERY, (artist, album, image, date))
+    cursor.execute(INSERT_QUERY, (artist, album, image, date, genre))
     db.commit()
     cursor.close()
 
@@ -71,3 +77,22 @@ def get_last_image(artist):
         return tuple(rows[0])
     else:
         return None, 0
+
+
+def get_genre_list():
+    cursor = db.cursor()
+    cursor.execute(GENRE_QUREY)
+    rows = cursor.fetchall()
+    cursor.close()
+    return [line[0] for line in rows if line[0] is not None]
+
+
+def get_artists(genre=None):
+    cursor = db.cursor()
+    if genre is None:
+        cursor.execute(ARTIST_QUREY)
+    else:
+        cursor.execute(ARTIST_GENRE_QUREY, (genre,))
+    rows = cursor.fetchall()
+    cursor.close()
+    return [line[0] for line in rows if line[0] is not None]
