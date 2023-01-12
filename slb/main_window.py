@@ -129,25 +129,6 @@ class GUIWindow(QtWidgets.QMainWindow):
     def on_timer(self):
         self.update_playing_info()
 
-    def build_speaker_list(self):
-        self.ui.speakerList.clear()
-        slist = [(int(s.ip_address.split(".")[-1]), s) for s in self.system.speakers]
-        slist.sort()
-        for i, (ip, item) in enumerate(slist):
-            line = QtWidgets.QListWidgetItem(f"{item.name} ({item.ip_address})\n\t{item.room}")
-            line.setData(QtCore.Qt.UserRole, item)
-            self.ui.speakerList.addItem(line)
-
-    def build_group_list(self):
-        self.ui.groupList.clear()
-        glist = [(g.label, g) for g in self.system.groups]
-        glist.sort()
-        for i, (label, group) in enumerate(glist):
-            line = QtWidgets.QListWidgetItem(label)
-            line.setData(QtCore.Qt.UserRole, group)
-            self.ui.groupList.addItem(line)
-        self.ui.groupList.setCurrentRow(0)
-
     def filter_artists(self):
         self.build_library()
 
@@ -416,6 +397,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             if player_status["current_transport_state"] == "PLAYING":
                 self.ui.sonosGroupView.activate_group(group)
                 return
+        self.ui.sonosGroupView.activate_group(self.system.groups[0])
 
     def change_active_group(self, group: SonosGroup):
         self.update_queue()
