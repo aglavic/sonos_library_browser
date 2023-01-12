@@ -181,6 +181,15 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QComboBox" name="genreFilter">
+       <item>
+        <property name="text">
+         <string>All Genres</string>
+        </property>
+       </item>
+      </widget>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -325,7 +334,6 @@
    </property>
   </action>
   <zorder>nowPlayingDock</zorder>
-  <zorder>speakersDock</zorder>
  </widget>
  <customwidgets>
   <customwidget>
@@ -418,7 +426,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>263</x>
-     <y>694</y>
+     <y>668</y>
     </hint>
     <hint type="destinationlabel">
      <x>674</x>
@@ -434,11 +442,27 @@
    <hints>
     <hint type="sourcelabel">
      <x>263</x>
-     <y>720</y>
+     <y>694</y>
     </hint>
     <hint type="destinationlabel">
      <x>687</x>
      <y>491</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>genreFilter</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>filter_artists()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>160</x>
+     <y>709</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>273</x>
+     <y>714</y>
     </hint>
    </hints>
   </connection>

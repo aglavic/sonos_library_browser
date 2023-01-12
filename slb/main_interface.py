@@ -90,6 +90,10 @@ class Ui_MainWindow(object):
         self.artistFilter = QtWidgets.QLineEdit(self.dockWidgetContents_3)
         self.artistFilter.setObjectName("artistFilter")
         self.verticalLayout_2.addWidget(self.artistFilter)
+        self.genreFilter = QtWidgets.QComboBox(self.dockWidgetContents_3)
+        self.genreFilter.setObjectName("genreFilter")
+        self.genreFilter.addItem("")
+        self.verticalLayout_2.addWidget(self.genreFilter)
         self.settingsDock.setWidget(self.dockWidgetContents_3)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.settingsDock)
         self.nowPlayingDock = QtWidgets.QDockWidget(MainWindow)
@@ -171,6 +175,7 @@ class Ui_MainWindow(object):
         self.actionForward.triggered.connect(MainWindow.queue_next)  # type: ignore
         self.iconSizeBox.currentIndexChanged["int"].connect(MainWindow.change_icon_size)  # type: ignore
         self.artistFilter.textEdited["QString"].connect(MainWindow.filter_artists)  # type: ignore
+        self.genreFilter.currentIndexChanged["int"].connect(MainWindow.filter_artists)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -184,6 +189,7 @@ class Ui_MainWindow(object):
         self.iconSizeBox.setItemText(1, _translate("MainWindow", "medium"))
         self.iconSizeBox.setItemText(2, _translate("MainWindow", "large"))
         self.artistFilter.setPlaceholderText(_translate("MainWindow", "filter artists"))
+        self.genreFilter.setItemText(0, _translate("MainWindow", "All Genres"))
         self.nowPlayingDock.setWindowTitle(_translate("MainWindow", "Playing..."))
         self.NowPlayingGroup.setToolTip(_translate("MainWindow", "Active Groupe"))
         self.NowPlayingGroup.setText(_translate("MainWindow", "{?}"))

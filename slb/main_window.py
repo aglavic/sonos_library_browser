@@ -129,25 +129,6 @@ class GUIWindow(QtWidgets.QMainWindow):
     def on_timer(self):
         self.update_playing_info()
 
-    def build_speaker_list(self):
-        self.ui.speakerList.clear()
-        slist = [(int(s.ip_address.split(".")[-1]), s) for s in self.system.speakers]
-        slist.sort()
-        for i, (ip, item) in enumerate(slist):
-            line = QtWidgets.QListWidgetItem(f"{item.name} ({item.ip_address})\n\t{item.room}")
-            line.setData(QtCore.Qt.UserRole, item)
-            self.ui.speakerList.addItem(line)
-
-    def build_group_list(self):
-        self.ui.groupList.clear()
-        glist = [(g.label, g) for g in self.system.groups]
-        glist.sort()
-        for i, (label, group) in enumerate(glist):
-            line = QtWidgets.QListWidgetItem(label)
-            line.setData(QtCore.Qt.UserRole, group)
-            self.ui.groupList.addItem(line)
-        self.ui.groupList.setCurrentRow(0)
-
     def filter_artists(self):
         self.build_library()
 
@@ -160,6 +141,9 @@ class GUIWindow(QtWidgets.QMainWindow):
             ]
         else:
             artists = [a for a in music_library.get_album_artists(max_items=1000) if artist_filter in a.title.lower()]
+        if self.ui.genreFilter.currentText() != "All Genres":
+            filtered_artists = mdb.get_artists(self.ui.genreFilter.currentText())
+            artists = [a for a in artists if a.title in filtered_artists]
         artists.sort(key=lambda a: a.title)
         return artists
 
@@ -225,6 +209,8 @@ class GUIWindow(QtWidgets.QMainWindow):
             del self._thread
             mdb.connect_db()
             self.unblock_library()
+            for genre in sorted(mdb.get_genre_list()):
+                self.ui.genreFilter.addItem(genre)
             self.progress_bar.setValue(0)
         elif progress > (self._last_progress + 0.1):
             self.build_artist_icons(display_range=(self._last_progress, progress))
@@ -416,6 +402,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             if player_status["current_transport_state"] == "PLAYING":
                 self.ui.sonosGroupView.activate_group(group)
                 return
+        self.ui.sonosGroupView.activate_group(self.system.groups[0])
 
     def change_active_group(self, group: SonosGroup):
         self.update_queue()

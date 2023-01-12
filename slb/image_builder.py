@@ -14,6 +14,8 @@ from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 from . import BASE_PATH
 from . import music_library as mdb
 
+eyed3.log.setLevel("ERROR")
+
 
 class LibraryImageBuilder(QThread):
     def __init__(self, music_library, artists):
@@ -43,6 +45,7 @@ class LibraryImageBuilder(QThread):
             for album in albums:
                 img_data, date = mdb.get_image(artist.title, album.title)
                 if img_data is None:
+                    genre = None
                     try:
                         rtrack = music_library.get_tracks_for_album(
                             artist.title, album.title, full_album_art_uri=True
@@ -60,6 +63,7 @@ class LibraryImageBuilder(QThread):
                     else:
                         try:
                             date = int(str(rmp3.tag.getBestDate()))
+                            genre = str(rmp3.tag.genre)
                         except (ValueError, AttributeError):
                             log.warning(f"Tag error for {rtpath}")
                             date = 0
@@ -68,7 +72,7 @@ class LibraryImageBuilder(QThread):
                         except Exception:
                             log.warning(f"Could not fetch artwork for {artist.title} | {album.title}", exc_info=True)
                             img_data = self._empty_image
-                    mdb.insert_image(artist.title, album.title, img_data, date)
+                    mdb.insert_image(artist.title, album.title, img_data, date, genre)
                 if date > last_date:
                     self.icon_data[artist.title] = img_data
                     last_date = date
