@@ -22,12 +22,12 @@ class Ui_MainWindow(object):
         self.libraryView = LibraryView(self.centralwidget)
         self.libraryView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.libraryView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.libraryView.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
+        self.libraryView.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.libraryView.setObjectName("libraryView")
         self.verticalLayout_3.addWidget(self.libraryView)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1055, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1055, 22))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.toolBar = QtWidgets.QToolBar(MainWindow)
@@ -154,6 +154,12 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addWidget(self.NowPlayingTime)
         self.nowPlayingDock.setWidget(self.dockWidgetContents_5)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.nowPlayingDock)
+        self.randomDock = QtWidgets.QDockWidget(MainWindow)
+        self.randomDock.setObjectName("randomDock")
+        self.randomPoolsWidget = RandomPoolWidget()
+        self.randomPoolsWidget.setObjectName("randomPoolsWidget")
+        self.randomDock.setWidget(self.randomPoolsWidget)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.randomDock)
         self.actionBack = QtWidgets.QAction(MainWindow)
         self.actionBack.setObjectName("actionBack")
         self.actionPlay_Pause = QtWidgets.QAction(MainWindow)
@@ -163,19 +169,20 @@ class Ui_MainWindow(object):
         self.actionStop = QtWidgets.QAction(MainWindow)
         self.actionStop.setObjectName("actionStop")
         self.nowPlayingDock.raise_()
+        self.randomDock.raise_()
         self.toolBar.addAction(self.actionBack)
         self.toolBar.addAction(self.actionPlay_Pause)
         self.toolBar.addAction(self.actionStop)
         self.toolBar.addAction(self.actionForward)
 
         self.retranslateUi(MainWindow)
-        self.actionBack.triggered.connect(MainWindow.queue_prev)  # type: ignore
-        self.actionPlay_Pause.triggered.connect(MainWindow.queue_play_pause)  # type: ignore
-        self.actionStop.triggered.connect(MainWindow.queue_stop)  # type: ignore
-        self.actionForward.triggered.connect(MainWindow.queue_next)  # type: ignore
-        self.iconSizeBox.currentIndexChanged["int"].connect(MainWindow.change_icon_size)  # type: ignore
-        self.artistFilter.textEdited["QString"].connect(MainWindow.filter_artists)  # type: ignore
-        self.genreFilter.currentIndexChanged["int"].connect(MainWindow.filter_artists)  # type: ignore
+        self.actionBack.triggered.connect(MainWindow.queue_prev) # type: ignore
+        self.actionPlay_Pause.triggered.connect(MainWindow.queue_play_pause) # type: ignore
+        self.actionStop.triggered.connect(MainWindow.queue_stop) # type: ignore
+        self.actionForward.triggered.connect(MainWindow.queue_next) # type: ignore
+        self.iconSizeBox.currentIndexChanged['int'].connect(MainWindow.change_icon_size) # type: ignore
+        self.artistFilter.textEdited['QString'].connect(MainWindow.filter_artists) # type: ignore
+        self.genreFilter.currentIndexChanged['int'].connect(MainWindow.filter_artists) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -202,11 +209,11 @@ class Ui_MainWindow(object):
         self.NowPlayingTrack.setText(_translate("MainWindow", "{?}"))
         self.NowPlayingTime.setToolTip(_translate("MainWindow", "Time"))
         self.NowPlayingTime.setText(_translate("MainWindow", "{?}"))
+        self.randomDock.setWindowTitle(_translate("MainWindow", "Random Pools"))
         self.actionBack.setText(_translate("MainWindow", "Back"))
         self.actionPlay_Pause.setText(_translate("MainWindow", "Play/Pause"))
         self.actionForward.setText(_translate("MainWindow", "Forward"))
         self.actionStop.setText(_translate("MainWindow", "Stop"))
-
-
 from .group_widget import SonosGroupWidget
+from .random_pools_widget import RandomPoolWidget
 from .simple_widgets import AlbumArtworkLabel, LibraryView

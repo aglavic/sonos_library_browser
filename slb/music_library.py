@@ -18,6 +18,11 @@ SEARCH_QUERY_2 = """SELECT album_art,date FROM album_art
 WHERE artist = ? ORDER BY date DESC;"""
 
 GENRE_QUREY = """SELECT DISTINCT genre FROM album_art;"""
+GENRE_COUNT_QUREY = """SELECT COUNT(album) FROM album_art WHERE genre = ?;"""
+ALBUM_COUNT_QUREY= """SELECT COUNT(album) FROM album_art;"""
+
+GENRE_ALBUMS_QUREY = """SELECT artist,album FROM album_art WHERE genre = ?;"""
+ALBUM_ALL_QUREY= """SELECT artist,album FROM album_art;"""
 
 ARTIST_QUREY = """SELECT DISTINCT artist FROM album_art ORDER BY artist ASC;"""
 ARTIST_GENRE_QUREY = """SELECT DISTINCT artist, genre FROM album_art WHERE genre = ? ORDER BY artist ASC;"""
@@ -85,6 +90,26 @@ def get_genre_list():
     rows = cursor.fetchall()
     cursor.close()
     return [line[0] for line in rows if line[0] is not None]
+
+def get_num_albums(genre=None):
+    cursor = db.cursor()
+    if genre is None:
+        cursor.execute(ALBUM_COUNT_QUREY)
+    else:
+        cursor.execute(GENRE_COUNT_QUREY, (genre,))
+    rows = cursor.fetchall()
+    cursor.close()
+    return int(rows[0][0])
+
+def get_albums(genre=None):
+    cursor = db.cursor()
+    if genre is None:
+        cursor.execute(ALBUM_ALL_QUREY)
+    else:
+        cursor.execute(GENRE_ALBUMS_QUREY, (genre,))
+    rows = cursor.fetchall()
+    cursor.close()
+    return list(rows)
 
 
 def get_artists(genre=None):

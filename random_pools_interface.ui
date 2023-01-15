@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>RandomPools</class>
+ <widget class="QWidget" name="RandomPools">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>240</width>
+    <height>320</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="2">
+    <widget class="QCheckBox" name="genreCheckbox">
+     <property name="text">
+      <string>Use Genres:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>when titles left &lt;=</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QSpinBox" name="titlesLeftSetting">
+     <property name="minimum">
+      <number>1</number>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="QCheckBox" name="autoAddAlbums">
+     <property name="text">
+      <string>Add Album automatically</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QPushButton" name="addRandomButton">
+     <property name="text">
+      <string>Add Random Album</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="QFrame" name="frame">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QScrollArea" name="scrollArea">
+        <property name="widgetResizable">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="genreControls">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>218</width>
+           <height>196</height>
+          </rect>
+         </property>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>genreCheckbox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>frame</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>60</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>78</x>
+     <y>85</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

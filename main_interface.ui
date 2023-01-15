@@ -36,7 +36,7 @@
      <x>0</x>
      <y>0</y>
      <width>1055</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -313,6 +313,15 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="randomDock">
+   <property name="windowTitle">
+    <string>Random Pools</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="RandomPoolWidget" name="randomPoolsWidget"/>
+  </widget>
   <action name="actionBack">
    <property name="text">
     <string>Back</string>
@@ -334,6 +343,7 @@
    </property>
   </action>
   <zorder>nowPlayingDock</zorder>
+  <zorder>randomDock</zorder>
  </widget>
  <customwidgets>
   <customwidget>
@@ -350,6 +360,12 @@
    <class>SonosGroupWidget</class>
    <extends>QGraphicsView</extends>
    <header location="global">.group_widget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>RandomPoolWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">.random_pools_widget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
@@ -426,7 +442,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>263</x>
-     <y>668</y>
+     <y>585</y>
     </hint>
     <hint type="destinationlabel">
      <x>674</x>
@@ -442,7 +458,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>263</x>
-     <y>694</y>
+     <y>637</y>
     </hint>
     <hint type="destinationlabel">
      <x>687</x>
@@ -458,7 +474,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>160</x>
-     <y>709</y>
+     <y>689</y>
     </hint>
     <hint type="destinationlabel">
      <x>273</x>

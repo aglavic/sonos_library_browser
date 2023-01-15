@@ -209,8 +209,13 @@ class GUIWindow(QtWidgets.QMainWindow):
             del self._thread
             mdb.connect_db()
             self.unblock_library()
-            for genre in sorted(mdb.get_genre_list()):
+            genres=list(sorted(mdb.get_genre_list()))
+            for genre in genres:
                 self.ui.genreFilter.addItem(genre)
+
+            self.ui.randomPoolsWidget.set_genres(genres)
+            self.ui.randomPoolsWidget.load_settings(self.settings)
+            self.ui.randomPoolsWidget.append_random_album.connect(self.append_album)
             self.progress_bar.setValue(0)
         elif progress > (self._last_progress + 0.1):
             self.build_artist_icons(display_range=(self._last_progress, progress))
@@ -343,6 +348,23 @@ class GUIWindow(QtWidgets.QMainWindow):
             self.update_queue()
             self.update_playing_info()
 
+    def append_album(self, artist, album):
+        group = self.current_group()
+        albums = list(self.system.speakers[0].reference.music_library.get_albums_for_artist(artist))
+        uri = None
+        for ai in albums:
+            if ai.title == album:
+                uri = ai.get_uri()
+        if uri is None:
+            log.debug(f"Didn't fid right album uri for {album}")
+            return
+        else:
+            group.coordinator.add_uri_to_queue(uri)
+            self.status_bar.showMessage(f"Appending {artist} | {album}", 1000)
+
+            self.update_queue()
+            self.update_playing_info()
+
     def hover_album(self, event: QtWidgets.QGraphicsSceneMouseEvent):
         scene: QtWidgets.QGraphicsScene = self.ui.libraryView.scene()
         trans = self.ui.libraryView.transform()
@@ -401,6 +423,7 @@ class GUIWindow(QtWidgets.QMainWindow):
             player_status = group.coordinator.get_current_transport_info()
             if player_status["current_transport_state"] == "PLAYING":
                 self.ui.sonosGroupView.activate_group(group)
+                self.change_active_group(group)
                 return
         self.ui.sonosGroupView.activate_group(self.system.groups[0])
 
@@ -415,6 +438,7 @@ class GUIWindow(QtWidgets.QMainWindow):
         track = group.now_playing()
 
         if track.title != self._last_selected_track:
+            # track changed since last update
             playing_brush = QtGui.QBrush(QtGui.QColor(100, 200, 100))
             other_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
 
@@ -422,6 +446,10 @@ class GUIWindow(QtWidgets.QMainWindow):
                 item = self.ui.groupQueueList.item(i)
                 if item.text() == f"\t{track.title}":
                     item.setBackground(playing_brush)
+                    if self.ui.randomPoolsWidget.ui.autoAddAlbums.isChecked() and \
+                        (self.ui.groupQueueList.count()-self.ui.randomPoolsWidget.ui.titlesLeftSetting.value()-i)<=0:
+                        # append random album to playlist
+                        QtCore.QTimer.singleShot(1, self.ui.randomPoolsWidget.get_random_choice)
                 else:
                     item.setBackground(other_brush)
             self._last_selected_track = track.title
@@ -549,4 +577,5 @@ class GUIWindow(QtWidgets.QMainWindow):
         self.settings.setValue("mainWindow/geometry", self.saveGeometry())
         self.settings.setValue("mainWindow/state", self.saveState())
         self.settings.setValue("mainWindow/icon_size", self.ui.iconSizeBox.currentIndex())
+        self.ui.randomPoolsWidget.save_settings(self.settings)
         super().closeEvent(event)
